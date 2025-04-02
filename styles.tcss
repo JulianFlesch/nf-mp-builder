@@ -1,0 +1,30 @@
+Stopwatch {   
+    background: $boost;
+    min-height: 50;
+    margin: 1;
+    max-width: 25;
+    padding: 1;
+}
+
+TimeDisplay {   
+    text-align: center;
+    color: $foreground-muted;
+    height: 3;
+}
+
+Button {
+    width: 16;
+}
+
+#start {
+    dock: left;
+}
+
+#stop {
+    dock: left;
+    display: none;
+}
+
+#reset {
+    dock: right;
+}
