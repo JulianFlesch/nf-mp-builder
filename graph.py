@@ -1,27 +1,10 @@
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, ScrollableContainer
-from textual.widgets import Button, Static, Header, Footer
+from textual.containers import Container, Horizontal, Vertical, ScrollableContainer, HorizontalScroll
+from textual.widgets import Button, Static, Header, Footer, Label
 from textual.reactive import reactive
 from textual.css.query import NoMatches
 import uuid
-
-class GraphNode(Static):
-    """A node in the graph visualization."""
-    
-    DEFAULT_CSS = """
-    GraphNode {
-        width: 20;
-        height: 5;
-        border: solid green;
-        content-align: center middle;
-    }
-    """
-    
-    node_id = reactive(str)
-    
-    def __init__(self, node_text: str = "Node", node_id: str = None):
-        super().__init__(node_text)
-        self.node_id = node_id or str(uuid.uuid4())[:8]
+import networkx as nx
 
 class AddNodeButton(Button):
     """Button to add a new node."""
@@ -29,26 +12,71 @@ class AddNodeButton(Button):
     DEFAULT_CSS = """
     AddNodeButton {
         max-width: 5;
-        max-height: 3;
+        min-height: 3;
         content-align: center middle;
         background: green;
         color: white;
     }
     """
-    
-    parent_id = reactive(str)
-    
-    def __init__(self, parent_id: str):
-        super().__init__("+")
-        self.parent_id = parent_id
 
-class NodeContainer(Container):
-    """Container for a node and its add button."""
+class RemoveNodeButton(Button):
+    """Button to remove a node."""
     
     DEFAULT_CSS = """
-    NodeContainer {
-        height: 6;
-        layout: horizontal;
+    RemoveNodeButton {
+        max-width: 5;
+        min-height: 3;
+        content-align: center middle;
+        background: red;
+        color: white;
+    }
+    """
+
+class ButtonContainer(Container):
+    """
+    Contains Add/Remove Buttons
+    """
+
+    DEFAULT_CSS = """
+    ButtonContainer > AddNodeButton {
+        dock: top;
+    }
+    
+    ButtonContainer > RemoveNodeButton {
+        dock: bottom;
+    }
+    """
+
+    def __init__(self, node_id, *args, **kwargs):
+        self.node_id = node_id
+        super().__init__(*args, **kwargs)
+
+    def compose(self):
+        yield AddNodeButton("+", id=f"add_btn_{self.node_id}")
+        yield RemoveNodeButton("-", id=f"remove_btn_{self.node_id}")
+
+class GraphNode(Container):
+    """A node in the graph visualization."""
+    
+    DEFAULT_CSS = """
+    GraphNode {
+        width: 25;
+        height: 8;
+        border: solid green;
+        padding: 0 1;
+    }
+    
+    GraphNode > Static {
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        content-align: center middle;
+    }
+    
+    GraphNode > ButtonContainer {
+        dock: right;
+        max-width: 5;
+        padding: 0 0;
     }
     """
     
@@ -60,8 +88,8 @@ class NodeContainer(Container):
         self.node_text = node_text
     
     def compose(self) -> ComposeResult:
-        yield GraphNode(self.node_text, self.node_id)
-        yield AddNodeButton(self.node_id)
+        yield Static("FOOO:" + self.node_text)
+        yield ButtonContainer(node_id=self.node_id)
 
 class GraphView(ScrollableContainer):
     """Container for the graph visualization with horizontal scrolling."""
@@ -71,26 +99,41 @@ class GraphView(ScrollableContainer):
         width: 100%;
         height: 100%;
         overflow-x: auto;
-        overflow-y: hidden;
+        overflow-y: auto;
     }
     """
-    
-    def compose(self) -> ComposeResult:
-        yield Header()
-        with Horizontal(id="graph_container"):
-            yield NodeContainer("Root", "root")
-        yield Footer()
+    def __init__(self, layers, edges):
+        self.layers = layers
+        self.edges = edges
+        super().__init__()
 
-class GraphApp(App):
+    def compose(self) -> ComposeResult:
+        with Horizontal(id="graph_container"):
+            for lrs, egs in zip(self.layers, self.edges):
+                with Vertical():
+                    for node in lrs:
+                        if node is not None:
+                            GraphNode(node, node)
+                        else:
+                            # TODO: Draw spacing
+                            pass
+                    
+                    # TODO: Draw edges after each layer
+                    for e in egs:
+                        pass
+
+
+class MetaPipelinesApp(App):
     """Main application for graph visualization."""
     
     DEFAULT_CSS = """
     #graph_container {
         height: 100%;
         align: left middle;
+        padding: 1;
     }
     
-    GraphApp {
+    MetaPipelinesApp {
         background: #1f1f1f;
     }
     """
@@ -99,45 +142,78 @@ class GraphApp(App):
         ("q", "quit", "Quit")
     ]
     
-    def compose(self) -> ComposeResult:
-        yield GraphView()
+    def __init__(self, graph: nx.DiGraph):
+        self.graph = graph
+        super().__init__()
 
-    def action_toggle_dark(self) -> None:
-        """An action to toggle dark mode."""
-        self.theme = (
-            "textual-dark" if self.theme == "textual-light" else "textual-light"
-        )
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield GraphView(self.get_layers_and_edges())
+        yield Footer()
     
+    def get_layers_and_edges(self):
+        layers = []
+        edges = []
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""
-        if not isinstance(event.button, AddNodeButton):
+        button_id = event.button.id
+        if not button_id:
             return
-        
-        # Get the parent node ID from the button
-        parent_id = event.button.parent_id
-        
+            
+        # Handle add button
+        if button_id.startswith("add_btn_"):
+            parent_id = button_id.replace("add_btn_", "")
+            self._add_node(parent_id)
+            
+        # Handle remove button
+        elif button_id.startswith("remove_btn_"):
+            node_id = button_id.replace("remove_btn_", "")
+            self._remove_node(node_id)
+    
+    def _add_node(self, parent_id: str) -> None:
+        """Add a new node after the parent node."""
         try:
-            # Find the parent node's container
-            parent_container = self.query_one(f"NodeContainer:has(GraphNode#{parent_id})")
+            parent_node = self.query_one(f"GraphNode#{parent_id}")
             graph_container = self.query_one("#graph_container")
             
-            # Create a new node container
-            new_node_text = f"Node {len(graph_container.children) + 1}"
-            new_node_container = NodeContainer(new_node_text)
-            
-            # Insert the new node after the parent node
-            graph_container.insert_after(new_node_container, parent_container)
+            # Create a new node
+            node_count = len(self.graph.number_of_nodes())
+            new_node_id = f"Node-{node_count + 1}"
+            # add to graph
+            self.graph.add_node(new_node_id)
+            self.graph.add_edge(parent_id, new_node_id)
+
+            graph_container.recompose()
             
             # Make sure the view scrolls to show the new node
-            self.call_after_refresh(self.scroll_to_node, new_node_container)
+            self.scroll_to_node(new_node_id)
+
         except NoMatches:
-            self.notify("Could not find parent node container")
+            self.notify("Could not find parent node")
     
-    def scroll_to_node(self, node: Container) -> None:
+    def _remove_node(self, node_id: str) -> None:
+        """Remove the node with the given ID."""
+        try:
+            # Don't allow removing the root node
+            if node_id == "root":
+                self.notify("Cannot remove the root node")
+                return
+                
+            node = self.query_one(f"GraphNode#{node_id}")
+            node.remove()
+            self.notify(f"Node removed")
+        except NoMatches:
+            self.notify("Could not find node to remove")
+    
+    def scroll_to_node(self, node: GraphNode) -> None:
         """Scroll the view to show a specific node."""
         graph_view = self.query_one(GraphView)
         graph_view.scroll_to_widget(node)
 
 if __name__ == "__main__":
-    app = GraphApp()
+
+    g = nx.DiGraph()
+    g.add_node("root")
+    app = MetaPipelinesApp(graph=g)
     app.run()
