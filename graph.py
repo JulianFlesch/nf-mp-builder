@@ -1,21 +1,70 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer, HorizontalScroll
 from textual.widgets import Button, Static, Header, Footer, Label
+from textual.widget import Widget
 from textual.reactive import reactive
 from textual.css.query import NoMatches
 import uuid
 import networkx as nx
+import os
+
+from rich.console import RenderableType
+from rich.panel import Panel
+from rich.segment import Segment
+from rich.style import Style
+import rich.console
+from rich.tree import Tree
+from rich.text import Text
+
+
+class GraphEdge(Widget):
+    """Represents an edge between two nodes."""
+    
+    ASCII_GUIDES = ("    ", "|   ", "+-- ", "`-- ")
+
+    DEFAULT_CSS = """
+    GraphEdge {
+        width: 8
+    }
+    """
+    def __init__(self, out_degree: int, node_height: int=5):
+        self.out_degree = out_degree
+        self.node_height = node_height
+        super().__init__()
+
+    def render(self) -> RenderableType:
+        """Render the edge as an arrow pointing to the target node."""
+
+        out = ""
+        for i in range(self.out_degree // 2):
+            out += "  +-->" + os.linesep
+            out += "  |   " + os.linesep  * (self.node_height // 2)
+        
+        if self.out_degree % 2 != 0:
+            out += "--+-->" + os.linesep if self.out_degree != 1 else ""
+        else:
+            out += "--+   " + os.linesep
+        
+        for i in range(self.out_degree // 2):
+            out += "  |   " + os.linesep  * (self.node_height // 2)
+            out += "  +-->" + os.linesep
+
+        #return Panel(out)
+        return Text(out)
+
 
 class AddNodeButton(Button):
     """Button to add a new node."""
     
     DEFAULT_CSS = """
     AddNodeButton {
-        max-width: 5;
-        min-height: 3;
+        width: 50%;
+        max-width: 3;
+        height: 100%;
         content-align: center middle;
         background: green;
         color: white;
+#        dock: left;
     }
     """
 
@@ -24,11 +73,13 @@ class RemoveNodeButton(Button):
     
     DEFAULT_CSS = """
     RemoveNodeButton {
-        max-width: 5;
-        min-height: 3;
+        width: 50%;
+        max-width: 3;
+        height: 100%;
         content-align: center middle;
         background: red;
         color: white;
+#        dock: right;
     }
     """
 
@@ -39,11 +90,12 @@ class ButtonContainer(Container):
 
     DEFAULT_CSS = """
     ButtonContainer > AddNodeButton {
-        dock: top;
+        dock: left;
     }
     
     ButtonContainer > RemoveNodeButton {
-        dock: bottom;
+        dock: right;
+        min-width: 8;
     }
     """
 
@@ -61,14 +113,14 @@ class GraphNode(Container):
     
     DEFAULT_CSS = """
     GraphNode {
-        width: 25;
-        height: 8;
+        width: 20;
+        height: 5;
         border: solid green;
         padding: 0 1;
     }
     
     GraphNode > Static {
-        width: 100%;
+        width: 60%;
         height: 100%;
         text-align: center;
         content-align: center middle;
@@ -76,7 +128,8 @@ class GraphNode(Container):
     
     GraphNode > ButtonContainer {
         dock: right;
-        max-width: 5;
+        width: 40%;
+        height: 100%;
         padding: 0 0;
     }
     """
@@ -96,7 +149,12 @@ class GraphView(ScrollableContainer):
     }
 
     GraphView > HorizontalScroll > Vertical {
-        width: 30;
+        width: auto;
+    }
+
+    GraphView > HorizontalView > GraphEdge {
+        max-width: 8;
+        content-align: center middle;
     }
     """
     graph: list
@@ -106,11 +164,13 @@ class GraphView(ScrollableContainer):
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        yield Static("Compose called! Graph: " + str(len(self.graph)))
+        yield Static("GraphView. Size: " + str(len(self.graph)))
         with HorizontalScroll(id="graph_container"):
             for n in self.graph:
-                with Vertical(id=f"vertical_{n}"):
+                with Vertical(id=f"vrt_nds_{n}"):
                     yield GraphNode(id=f"{n}")
+#                with Vertical(id=f"vrt_egs_{n}"):
+                yield GraphEdge(out_degree=2)
 
 class MetaPipelinesApp(App):
     """Main application for graph visualization."""
