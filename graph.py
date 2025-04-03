@@ -50,6 +50,7 @@ class ButtonContainer(Container):
     def __init__(self, node_id, *args, **kwargs):
         self.node_id = node_id
         super().__init__(*args, **kwargs)
+        self.id = "btn_ctn_" + node_id
 
     def compose(self):
         yield AddNodeButton("+", id=f"add_btn_{self.node_id}")
@@ -79,17 +80,11 @@ class GraphNode(Container):
         padding: 0 0;
     }
     """
-    
-    node_id = reactive(str)
-    
-    def __init__(self, node_text: str = "Node", node_id: str = None):
-        super().__init__()
-        self.node_id = node_id or str(uuid.uuid4())[:8]
-        self.node_text = node_text
-    
+
     def compose(self) -> ComposeResult:
-        yield Static("FOOO:" + self.node_text)
-        yield ButtonContainer(node_id=self.node_id)
+        yield Static(self.id)
+        yield ButtonContainer(node_id=self.id)
+
 
 class GraphView(ScrollableContainer):
     """Container for the graph visualization with horizontal scrolling."""
@@ -98,30 +93,24 @@ class GraphView(ScrollableContainer):
     GraphView {
         width: 100%;
         height: 100%;
-        overflow-x: auto;
-        overflow-y: auto;
+    }
+
+    GraphView > HorizontalScroll > Vertical {
+        width: 30;
     }
     """
-    def __init__(self, layers, edges):
-        self.layers = layers
-        self.edges = edges
+    graph: list
+
+    def __init__(self, graph: list):
+        self.graph = graph
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        with Horizontal(id="graph_container"):
-            for lrs, egs in zip(self.layers, self.edges):
-                with Vertical():
-                    for node in lrs:
-                        if node is not None:
-                            GraphNode(node, node)
-                        else:
-                            # TODO: Draw spacing
-                            pass
-                    
-                    # TODO: Draw edges after each layer
-                    for e in egs:
-                        pass
-
+        yield Static("Compose called! Graph: " + str(len(self.graph)))
+        with HorizontalScroll(id="graph_container"):
+            for n in self.graph:
+                with Vertical(id=f"vertical_{n}"):
+                    yield GraphNode(id=f"{n}")
 
 class MetaPipelinesApp(App):
     """Main application for graph visualization."""
@@ -139,21 +128,23 @@ class MetaPipelinesApp(App):
     """
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
-        ("q", "quit", "Quit")
+        ("q", "quit", "Quit"),
     ]
     
-    def __init__(self, graph: nx.DiGraph):
-        self.graph = graph
+    def __init__(self, graph: list):
+        self._next_node_id = 1
+        self.graph = graph  #graph
         super().__init__()
+
+    @property
+    def next_node_number(self):
+        nid, self._next_node_id = self._next_node_id, self._next_node_id + 1
+        return nid
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield GraphView(self.get_layers_and_edges())
+        yield GraphView(self.graph)  # pass reference
         yield Footer()
-    
-    def get_layers_and_edges(self):
-        layers = []
-        edges = []
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""
@@ -172,48 +163,59 @@ class MetaPipelinesApp(App):
             self._remove_node(node_id)
     
     def _add_node(self, parent_id: str) -> None:
-        """Add a new node after the parent node."""
-        try:
-            parent_node = self.query_one(f"GraphNode#{parent_id}")
-            graph_container = self.query_one("#graph_container")
+            """Add a new node after the parent node."""
+        #try:
+            graph_view = self.query_one(GraphView)
             
             # Create a new node
-            node_count = len(self.graph.number_of_nodes())
-            new_node_id = f"Node-{node_count + 1}"
-            # add to graph
-            self.graph.add_node(new_node_id)
-            self.graph.add_edge(parent_id, new_node_id)
+            new_node_id = f"node{self.next_node_number}"
 
-            graph_container.recompose()
+            # only update the original graph
+            i = self.graph.index(parent_id)
+            self.graph.insert(i + 1, new_node_id)
+
+            # DEBUG OUTPUT
+            #self.notify("Current Graph: " + " ".join(self.graph))
+            #self.notify("Graph View Graph:" + " ".join(map(lambda i: str(i), graph_view.graph)))
+            #self.notify("Graph View Graph Type: " + str(type(graph_view.graph)))
+
+            # Update Graph view
+            graph_view.refresh(recompose=True)
             
             # Make sure the view scrolls to show the new node
-            self.scroll_to_node(new_node_id)
+            #scroll_to_node(graph_view, new_node_id)
+            graph_view.call_after_refresh(self.scroll_to_node, graph_view, new_node_id)
 
-        except NoMatches:
-            self.notify("Could not find parent node")
+        #except NoMatches:
+        #    self.notify("Could not find parent node")
     
     def _remove_node(self, node_id: str) -> None:
         """Remove the node with the given ID."""
         try:
             # Don't allow removing the root node
-            if node_id == "root":
+            if node_id == "node0":
                 self.notify("Cannot remove the root node")
                 return
-                
-            node = self.query_one(f"GraphNode#{node_id}")
-            node.remove()
+            
+            i = self.graph.index(node_id)
+            _ = self.graph.pop(i)
+            graph_view = self.query_one(GraphView)
+            graph_view.refresh(recompose=True)
+
             self.notify(f"Node removed")
         except NoMatches:
             self.notify("Could not find node to remove")
     
-    def scroll_to_node(self, node: GraphNode) -> None:
+    def scroll_to_node(self, graph_view: GraphView, node_id: str) -> None:
         """Scroll the view to show a specific node."""
-        graph_view = self.query_one(GraphView)
-        graph_view.scroll_to_widget(node)
+        focused_graph_node = self.query_one(f"GraphNode#{node_id}")
+        graph_view.scroll_to_widget(focused_graph_node)
+
 
 if __name__ == "__main__":
 
-    g = nx.DiGraph()
-    g.add_node("root")
+    #g = nx.DiGraph()
+    #g.add_node("root")
+    g = ["node0"]
     app = MetaPipelinesApp(graph=g)
     app.run()
