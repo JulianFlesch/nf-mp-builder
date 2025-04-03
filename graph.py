@@ -20,7 +20,7 @@ from rich.text import Text
 class GraphEdge(Widget):
     """Represents an edge between two nodes."""
     
-    ASCII_GUIDES = ("    ", "|   ", "+-- ", "`-- ")
+    #ASCII_GUIDES = ("    ", "|   ", "+-- ", "`-- ")
 
     DEFAULT_CSS = """
     GraphEdge {
@@ -35,19 +35,16 @@ class GraphEdge(Widget):
     def render(self) -> RenderableType:
         """Render the edge as an arrow pointing to the target node."""
 
-        out = ""
-        for i in range(self.out_degree // 2):
-            out += "  +-->" + os.linesep
-            out += "  |   " + os.linesep  * (self.node_height // 2)
-        
-        if self.out_degree % 2 != 0:
-            out += "--+-->" + os.linesep if self.out_degree != 1 else ""
+        out = os.linesep * (self.node_height // 2)
+
+        if self.out_degree == 1:
+            out += "----->"
         else:
-            out += "--+   " + os.linesep
+            out += "--+-->" + os.linesep
         
-        for i in range(self.out_degree // 2):
-            out += "  |   " + os.linesep  * (self.node_height // 2)
-            out += "  +-->" + os.linesep
+            for i in range(self.out_degree - 1):
+                out += ("  |   " + os.linesep)  * (self.node_height)
+                out += "  +-->" + os.linesep
 
         #return Panel(out)
         return Text(out)
@@ -64,7 +61,7 @@ class AddNodeButton(Button):
         content-align: center middle;
         background: green;
         color: white;
-#        dock: left;
+        padding: 0 0;
     }
     """
 
@@ -79,7 +76,7 @@ class RemoveNodeButton(Button):
         content-align: center middle;
         background: red;
         color: white;
-#        dock: right;
+        padding: 0 0;
     }
     """
 
@@ -95,7 +92,6 @@ class ButtonContainer(Container):
     
     ButtonContainer > RemoveNodeButton {
         dock: right;
-        min-width: 8;
     }
     """
 
@@ -110,13 +106,12 @@ class ButtonContainer(Container):
 
 class GraphNode(Container):
     """A node in the graph visualization."""
-    
     DEFAULT_CSS = """
     GraphNode {
         width: 20;
-        height: 5;
         border: solid green;
-        padding: 0 1;
+        height: 3;
+        padding: 0 0;
     }
     
     GraphNode > Static {
@@ -149,11 +144,14 @@ class GraphView(ScrollableContainer):
     }
 
     GraphView > HorizontalScroll > Vertical {
+        height: 100%;
         width: auto;
+        content-align: center middle;
     }
 
-    GraphView > HorizontalView > GraphEdge {
+    GraphView > HorizontalView > Vertical > GraphEdge {
         max-width: 8;
+        height: 100%;
         content-align: center middle;
     }
     """
@@ -169,8 +167,8 @@ class GraphView(ScrollableContainer):
             for n in self.graph:
                 with Vertical(id=f"vrt_nds_{n}"):
                     yield GraphNode(id=f"{n}")
-#                with Vertical(id=f"vrt_egs_{n}"):
-                yield GraphEdge(out_degree=2)
+                with Vertical(id=f"vrt_egs_{n}"):
+                    yield GraphEdge(out_degree=3, node_height=3)
 
 class MetaPipelinesApp(App):
     """Main application for graph visualization."""
