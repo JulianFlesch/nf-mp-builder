@@ -58,6 +58,7 @@ class AddNodeButton(Button):
         width: 50%;
         max-width: 3;
         height: 100%;
+        max-height: 3;
         content-align: center middle;
         background: green;
         color: white;
@@ -73,6 +74,7 @@ class RemoveNodeButton(Button):
         width: 50%;
         max-width: 3;
         height: 100%;
+        max-height: 3;
         content-align: center middle;
         background: red;
         color: white;
@@ -110,7 +112,7 @@ class GraphNode(Container):
     GraphNode {
         width: 20;
         border: solid green;
-        height: 3;
+        height: 5;
         padding: 0 0;
     }
     
@@ -164,11 +166,13 @@ class GraphView(ScrollableContainer):
     def compose(self) -> ComposeResult:
         yield Static("GraphView. Size: " + str(len(self.graph)))
         with HorizontalScroll(id="graph_container"):
-            for n in self.graph:
+            for (i, n) in enumerate(self.graph):
                 with Vertical(id=f"vrt_nds_{n}"):
                     yield GraphNode(id=f"{n}")
-                with Vertical(id=f"vrt_egs_{n}"):
-                    yield GraphEdge(out_degree=3, node_height=3)
+
+                if i < len(self.graph) - 1:
+                    with Vertical(id=f"vrt_egs_{n}"):
+                        yield GraphEdge(out_degree=1, node_height=5)
 
 class MetaPipelinesApp(App):
     """Main application for graph visualization."""
