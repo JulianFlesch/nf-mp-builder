@@ -157,22 +157,61 @@ class GraphView(ScrollableContainer):
         content-align: center middle;
     }
     """
-    graph: list
+    graph: nx.DiGraph
 
-    def __init__(self, graph: list):
+    def __init__(self, graph: nx.DiGraph):
         self.graph = graph
         super().__init__()
 
-    def compose(self) -> ComposeResult:
-        yield Static("GraphView. Size: " + str(len(self.graph)))
-        with HorizontalScroll(id="graph_container"):
-            for (i, n) in enumerate(self.graph):
-                with Vertical(id=f"vrt_nds_{n}"):
-                    yield GraphNode(id=f"{n}")
+    def _unvisit_graph(self):
+        for n in self.graph.nodes():
+            self.graph.nodes[n]["visited"] = False
+            self.graph.nodes[n]["depth"] = 0
+            self.graph.nodes[n]["breadth"] = 0
 
-                if i < len(self.graph) - 1:
-                    with Vertical(id=f"vrt_egs_{n}"):
-                        yield GraphEdge(out_degree=1, node_height=5)
+    def _layout_graph(self):
+        """
+        DFS to assign node coordinates that aid drawing
+        """
+        # TODO: How to find root?
+        # first node is currently always set as root:
+        current_node = list(self.graph.nodes())[0]
+        stack = [current_node]
+
+        while len(stack) > 0:
+
+            # get top of stack
+            current_node = stack.pop(0)
+
+            # position the node relative to ancestors
+            depth, breadth = 1, 1
+            for ancestor in nx.ancestors(self.graph, current_node):
+                depth = max(self.graph.nodes[ancestor].get("depth", 0), depth)
+                breadth = max(self.graph.nodes[ancestor].get("breadth", 0), breadth)
+            
+            #attr = nx.get_node_attributes(self.graph, current_node)
+            self.graph.nodes[current_node]["depth"] = depth
+            self.graph.nodes[current_node]["breadth"] = breadth
+
+            if not self.graph.nodes[current_node].get("visited", False):
+                self.graph.nodes[current_node]["visited"] = True
+                stack += list(nx.descendants(self.graph, current_node))
+
+    def compose(self) -> ComposeResult:
+
+        self._unvisit_graph()
+        self._layout_graph()
+
+        yield Static("GraphView. Size: " + str(len(self.graph)))
+        with Scroll(id="graph_container"):
+            for i, layer in enumerate(nx.bfs_layers(self.graph, "node0")):
+                with Vertical(id=f"vrt_nds_{i}"):
+                    for node in layer: 
+                        yield GraphNode(id=f"{node}")
+
+                #if i < len(self.graph) - 1:
+                #    with Vertical(id=f"vrt_egs_{node}"):
+                #        yield GraphEdge(out_degree=1, node_height=5)
 
 class MetaPipelinesApp(App):
     """Main application for graph visualization."""
@@ -193,7 +232,7 @@ class MetaPipelinesApp(App):
         ("q", "quit", "Quit"),
     ]
     
-    def __init__(self, graph: list):
+    def __init__(self, graph: nx.DiGraph):
         self._next_node_id = 1
         self.graph = graph  #graph
         super().__init__()
@@ -233,13 +272,7 @@ class MetaPipelinesApp(App):
             new_node_id = f"node{self.next_node_number}"
 
             # only update the original graph
-            i = self.graph.index(parent_id)
-            self.graph.insert(i + 1, new_node_id)
-
-            # DEBUG OUTPUT
-            #self.notify("Current Graph: " + " ".join(self.graph))
-            #self.notify("Graph View Graph:" + " ".join(map(lambda i: str(i), graph_view.graph)))
-            #self.notify("Graph View Graph Type: " + str(type(graph_view.graph)))
+            self.graph.add_edge(parent_id, new_node_id)
 
             # Update Graph view
             graph_view.refresh(recompose=True)
@@ -259,8 +292,12 @@ class MetaPipelinesApp(App):
                 self.notify("Cannot remove the root node")
                 return
             
-            i = self.graph.index(node_id)
-            _ = self.graph.pop(i)
+            # Remove node (and all its edges)
+            # TODO: Remove disconnected nodes 
+            # (They won't be drawn, but are still in the graph)
+            self.graph.remove_node(node_id)
+
+            # Redraw the graph
             graph_view = self.query_one(GraphView)
             graph_view.refresh(recompose=True)
 
@@ -276,8 +313,7 @@ class MetaPipelinesApp(App):
 
 if __name__ == "__main__":
 
-    #g = nx.DiGraph()
-    #g.add_node("root")
-    g = ["node0"]
+    g = nx.DiGraph()
+    g.add_node("node0")
     app = MetaPipelinesApp(graph=g)
     app.run()
