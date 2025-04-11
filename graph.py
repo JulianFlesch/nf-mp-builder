@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll, Vertical, ScrollableContainer, HorizontalScroll
-from textual.widgets import Button, Static, Header, Footer, Label
+from textual.widgets import Button, Static, Header, Footer, Label, Placeholder
 from textual.widget import Widget
 from textual.reactive import reactive
 from textual.css.query import NoMatches
@@ -136,6 +136,18 @@ class GraphNode(Container):
         yield ButtonContainer(node_id=self.id)
 
 
+class GraphNodeSpacer(Container):
+    """A placeholder to position GraphNodes"""
+    DEFAULT_CSS = """
+    GraphNodeSpacer {
+        height: 5;
+        width: 20;
+    }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield Static()
+
 class GraphView(Container):
     """Container for the graph visualization with horizontal scrolling."""
     
@@ -153,6 +165,10 @@ class GraphView(Container):
         max-width: 8;
         height: 100%;
         content-align: center middle;
+    }
+
+    Placeholder {
+        height: 5;
     }
     """
     graph: nx.DiGraph
@@ -219,7 +235,7 @@ class GraphView(Container):
                         node_depth = self.graph.nodes[node].get("depth")
                         node_breadth = self.graph.nodes[node].get("breadth")
 
-                        yield Static("Depth: " + str(node_depth) + " Breadth: " + str(node_breadth))
+                        #yield Static("Depth: " + str(node_depth) + " Breadth: " + str(node_breadth))
                         
                         # push node back, if it is also a child of a downstream node
                         if node_depth > i and len(layers) > i+1:
@@ -227,9 +243,10 @@ class GraphView(Container):
                             continue
                         
                         # if a downstream node has many children, insert spacing according to breadth
-                        for _ in range(j, node_breadth):
-                            yield Static("foo")
-
+                        for k in range(j, node_breadth):
+                            #yield Placeholder(id=f"pchld-{i}-{j}-{k}")
+                            yield GraphNodeSpacer()
+                        
                         # Draw the node
                         yield GraphNode(id=f"{node}")
                         
