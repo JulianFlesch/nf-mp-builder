@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, Vertical, ScrollableContainer, HorizontalScroll
+from textual.containers import Container, Horizontal, VerticalScroll, Vertical, ScrollableContainer, HorizontalScroll
 from textual.widgets import Button, Static, Header, Footer, Label
 from textual.widget import Widget
 from textual.reactive import reactive
@@ -136,18 +136,16 @@ class GraphNode(Container):
         yield ButtonContainer(node_id=self.id)
 
 
-class GraphView(ScrollableContainer):
+class GraphView(Container):
     """Container for the graph visualization with horizontal scrolling."""
     
     DEFAULT_CSS = """
     GraphView {
         width: 100%;
-        height: 100%;
     }
 
     GraphView > HorizontalScroll > Vertical {
-        height: 100%;
-        width: auto;
+        width: auto; 
         content-align: center middle;
     }
 
@@ -178,36 +176,64 @@ class GraphView(ScrollableContainer):
         current_node = list(self.graph.nodes())[0]
         stack = [current_node]
 
+        # node breadth is tracked globally
+        breadth = 0
+
         while len(stack) > 0:
 
             # get top of stack
             current_node = stack.pop(0)
 
-            # position the node relative to ancestors
-            depth, breadth = 1, 1
-            for ancestor in nx.ancestors(self.graph, current_node):
-                depth = max(self.graph.nodes[ancestor].get("depth", 0), depth)
-                breadth = max(self.graph.nodes[ancestor].get("breadth", 0), breadth)
-            
-            #attr = nx.get_node_attributes(self.graph, current_node)
-            self.graph.nodes[current_node]["depth"] = depth
-            self.graph.nodes[current_node]["breadth"] = breadth
-
             if not self.graph.nodes[current_node].get("visited", False):
+                # position the node relative to ancestors
+                depth = 0
+                for ancestor in nx.ancestors(self.graph, current_node):
+                    depth = max(self.graph.nodes[ancestor].get("depth", 0) + 1, depth)
+                    #breadth = min(self.graph.nodes[ancestor].get("breadth", 0), breadth + 1)
+
+                self.graph.nodes[current_node]["depth"] = depth
+                self.graph.nodes[current_node]["breadth"] = breadth
                 self.graph.nodes[current_node]["visited"] = True
-                stack += list(nx.descendants(self.graph, current_node))
+
+                # We have to infer direct descendants from edge data
+                node_descendants = list(map(lambda edge: edge[1], nx.edges(self.graph, current_node)))
+                stack = node_descendants + stack
+
+                if len(node_descendants) == 0:
+                    breadth += 1
 
     def compose(self) -> ComposeResult:
 
         self._unvisit_graph()
         self._layout_graph()
 
-        yield Static("GraphView. Size: " + str(len(self.graph)))
-        with Scroll(id="graph_container"):
-            for i, layer in enumerate(nx.bfs_layers(self.graph, "node0")):
+        import json
+        yield Static("GraphView. Size: " + str(len(self.graph)) + "Node Data: " + json.dumps(nx.get_node_attributes(self.graph, "depth")))
+        with HorizontalScroll(id="graph_container"):
+            layers = nx.bfs_layers(self.graph, "node0")
+            for i, layer in enumerate(layers):
                 with Vertical(id=f"vrt_nds_{i}"):
-                    for node in layer: 
+                    layer = sorted(layer, key=lambda n: self.graph.nodes[n].get("breadth", 0))
+                    for j, node in enumerate(layer):
+
+                        node_depth = self.graph.nodes[node].get("depth")
+                        node_breadth = self.graph.nodes[node].get("breadth")
+
+                        yield Static("Depth: " + str(node_depth) + " Breadth: " + str(node_breadth))
+                        
+                        # push node back, if it is also a child of a downstream node
+                        if node_depth > i and len(layers) > i+1:
+                            layers[i+1].append(node)
+                            continue
+                        
+                        # if a downstream node has many children, insert spacing according to breadth
+                        for _ in range(j, node_breadth):
+                            yield Static("foo")
+
+                        # Draw the node
                         yield GraphNode(id=f"{node}")
+                        
+                        # TODO: Draw the edges
 
                 #if i < len(self.graph) - 1:
                 #    with Vertical(id=f"vrt_egs_{node}"):
