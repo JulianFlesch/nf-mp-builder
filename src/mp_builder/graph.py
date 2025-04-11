@@ -144,7 +144,7 @@ class GraphNodeSpacer(Container):
     def compose(self) -> ComposeResult:
         yield Static()
 
-class GraphView(Container):
+class GraphView(ScrollableContainer):
     """Container for the graph visualization with horizontal scrolling."""
     
     DEFAULT_CSS = """
