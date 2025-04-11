@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container, Vertical, ScrollableContainer, HorizontalScroll
-from textual.widgets import Button, Static
+from textual.widgets import Button, Static, Label
 from textual.widget import Widget
 from textual.reactive import reactive
 
@@ -112,10 +112,7 @@ class GraphNode(Container):
     }
     
     GraphNode > Static {
-        width: 60%;
-        height: 100%;
-        text-align: center;
-        content-align: center middle;
+        width: 75%;
     }
     
     GraphNode > ButtonContainer {
@@ -125,9 +122,13 @@ class GraphNode(Container):
         padding: 0 0;
     }
     """
+    def __init__(self, text: str=None, *args, **kwargs):
+        self.text = text
+        super().__init__(*args, **kwargs)
 
     def compose(self) -> ComposeResult:
         yield Static(self.id)
+        yield Static(self.text)
         yield ButtonContainer(node_id=self.id)
 
 
@@ -225,6 +226,7 @@ class GraphView(Container):
             for i, layer in enumerate(layers):
                 with Vertical(id=f"vrt_nds_{i}"):
                     layer = sorted(layer, key=lambda n: self.graph.nodes[n].get("breadth", 0))
+                    tot_breadth = 0
                     for j, node in enumerate(layer):
 
                         node_depth = self.graph.nodes[node].get("depth")
@@ -238,15 +240,14 @@ class GraphView(Container):
                             continue
                         
                         # if a downstream node has many children, insert spacing according to breadth
-                        for k in range(j, node_breadth):
-                            #yield Placeholder(id=f"pchld-{i}-{j}-{k}")
+                        while tot_breadth + j < node_breadth:
+                            tot_breadth += 1
                             yield GraphNodeSpacer()
-                        
+
                         # Draw the node
-                        yield GraphNode(id=f"{node}")
+                        yield GraphNode(text=f"d:{node_depth} b: {node_breadth}", id=f"{node}")                        
                         
                         # TODO: Draw the edges
 
-                #if i < len(self.graph) - 1:
-                #    with Vertical(id=f"vrt_egs_{node}"):
-                #        yield GraphEdge(out_degree=1, node_height=5)
+                with Vertical(id=f"vrt_egs_{node}"):
+                    yield GraphEdge(out_degree=1, node_height=5)
