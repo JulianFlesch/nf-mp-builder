@@ -101,11 +101,3 @@ class MetaPipelinesApp(App):
         """Scroll the view to show a specific node."""
         focused_graph_node = self.query_one(f"GraphNode#{node_id}")
         graph_view.scroll_to_widget(focused_graph_node)
-
-
-if __name__ == "__main__":
-
-    g = nx.DiGraph()
-    g.add_node("node0")
-    app = MetaPipelinesApp(graph=g)
-    app.run()

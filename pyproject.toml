@@ -1,0 +1,22 @@
+[project]
+name = "mp-builder"
+version = "0.1.0"
+description = "Meta-Pipeline builder for Nextflow/nf-core"
+readme = "README.md"
+authors = [
+    { name = "Julian Flesch", email = "julian.flesch@qbic.uni-tuebingen.de" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.10.1",
+    "networkx>=3.4.2",
+    "numpy>=2.2.4",
+    "textual>=3.0.1",
+]
+
+[project.scripts]
+mp-builder = "mp_builder:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
