@@ -8,13 +8,7 @@ from mp_builder.graph import GraphView
 class MetaPipelinesApp(App):
     """Main application for graph visualization."""
     
-    DEFAULT_CSS = """
-    #graph_container {
-        height: 100%;
-        align: left middle;
-        padding: 1;
-    }
-    
+    DEFAULT_CSS = """    
     MetaPipelinesApp {
         background: #1f1f1f;
     }
