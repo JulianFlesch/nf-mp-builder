@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.containers import Container, Vertical, ScrollableContainer, HorizontalScroll
+from textual.containers import Container, Vertical, VerticalScroll, ScrollableContainer, HorizontalScroll, Horizontal
 from textual.widgets import Button, Static, Label
 from textual.widget import Widget
 from textual.reactive import reactive
@@ -22,10 +22,10 @@ class GraphEdge(Widget):
         width: 8
     }
     """
-    def __init__(self, out_degree: int, node_height: int=5):
+    def __init__(self, out_degree: int, node_height: int=5, *args, **kwargs):
         self.out_degree = out_degree
         self.node_height = node_height
-        super().__init__()
+        super().__init__(*args, **kwargs)
 
     def render(self) -> RenderableType:
         """Render the edge as an arrow pointing to the target node."""
@@ -149,17 +149,37 @@ class GraphView(ScrollableContainer):
     
     DEFAULT_CSS = """
     GraphView {
+        overflow: scroll scroll; /* Explicitly allow both scrollbars */
+        border: thick $accent-darken-2; /* Debugging border */
+        height: 100%;
         width: 100%;
     }
 
-    GraphView > HorizontalScroll > Vertical {
-        width: auto; 
+    GraphView > Horizontal {
+        /* Let this container size itself based on its content */
+        width: auto;
+        height: auto;
+        /* Add some visual space between columns if desired */
+        /* grid-gutter-horizontal: 5; */ /* If using grid layout */
+        /* Or use margin on Vertical below */
+        border: thick $accent; /* Debugging border */
         content-align: center middle;
     }
 
-    GraphView > HorizontalView > Vertical > GraphEdge {
+    /* Each vertical column representing a layer */
+    GraphView > Horizontal > Vertical {
+        width: auto; /* Let column width be determined by nodes inside */
+        height: auto; /* Let column height grow with nodes/spacers */
+        /* border: round $accent-lighten-2; */ /* Debugging border */
+        /* Add space between columns */
+        /* margin-right: 5; */ /* Example spacing */
+        /* Align items top-center within the column */
+        align: center top;
+    }
+
+    GraphView > Horizontal > Vertical > GraphEdge {
         max-width: 8;
-        height: 100%;
+        height: auto;
         content-align: center middle;
     }
 
@@ -221,7 +241,7 @@ class GraphView(ScrollableContainer):
 
         import json
         yield Static("GraphView. Size: " + str(len(self.graph)) + "Node Data: " + json.dumps(nx.get_node_attributes(self.graph, "depth")))
-        with HorizontalScroll(id="graph_container"):
+        with Horizontal(id="graph_container"):
             layers = nx.bfs_layers(self.graph, "node0")
             for i, layer in enumerate(layers):
                 with Vertical(id=f"vrt_nds_{i}"):
@@ -250,4 +270,4 @@ class GraphView(ScrollableContainer):
                         # TODO: Draw the edges
 
                 with Vertical(id=f"vrt_egs_{node}"):
-                    yield GraphEdge(out_degree=1, node_height=5)
+                    yield GraphEdge(out_degree=1, node_height=5, classes="graph_edge")
