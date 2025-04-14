@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container, Vertical, VerticalScroll, ScrollableContainer, HorizontalScroll, Horizontal
-from textual.widgets import Button, Static, Label
+from textual.widgets import Button, Static, Label, Placeholder
 from textual.widget import Widget
 from textual.reactive import reactive
 
@@ -10,6 +10,20 @@ import os
 from rich.console import RenderableType
 
 from rich.text import Text
+from rich.align import Align
+
+
+class GraphNodeSpacer(Static):
+    """A placeholder to position GraphNodes"""
+    DEFAULT_CSS = """
+    GraphNodeSpacer {
+        height: 5;
+        width: 20;
+    }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield Static()
 
 
 class GraphEdge(Widget):
@@ -17,13 +31,36 @@ class GraphEdge(Widget):
     
     #ASCII_GUIDES = ("    ", "|   ", "+-- ", "`-- ")
 
+    ELEMENTS = [
+        '─', # Box Drawings Light Horizontal
+        '│', # Box Drawings Light Vertical
+        '┌', # Box Drawings Light Down and Right
+        '┐', # Box Drawings Light Down and Left
+        '└', # Box Drawings Light Up and Right
+        '┘', # Box Drawings Light Up and Left
+        '├', # Box Drawings Light Vertical and Right
+        '┤', # Box Drawings Light Vertical and Left
+        '┬', # Box Drawings Light Down and Horizontal
+        '┴', # Box Drawings Light Up and Horizontal
+        '┼', # Box Drawings Light Vertical and Horizontal (Cross)
+    ]
+
+    TREE_GUIDES = [
+        '──→',
+        '─┬→',
+        ' ├→',
+        ' └→',
+        ' │ '
+    ]
+
     DEFAULT_CSS = """
     GraphEdge {
         width: 8
     }
     """
-    def __init__(self, out_degree: int, node_height: int=5, *args, **kwargs):
-        self.out_degree = out_degree
+    def __init__(self, in_breadths: list[int], out_breadths: list[list[int]], node_height: int=5, *args, **kwargs):
+        self.in_breadths = in_breadths
+        self.out_breadths = out_breadths
         self.node_height = node_height
         super().__init__(*args, **kwargs)
 
@@ -32,15 +69,30 @@ class GraphEdge(Widget):
 
         out = os.linesep * (self.node_height // 2)
 
-        if self.out_degree == 1:
-            out += "----->"
-        else:
-            out += "--+-->" + os.linesep
-        
-            for i in range(self.out_degree - 1):
-                out += ("  |   " + os.linesep)  * (self.node_height)
-                out += "  +-->" + os.linesep
+        for in_brd, out_brds in zip(self.in_breadths, self.out_breadths):
+            
+            if len(out_brds) == 1:
+                out += self.TREE_GUIDES[0]
 
+            elif len(out_brds) > 1:
+                base_brd = out_brds[0]
+                for i, brd in enumerate(out_brds):
+                    if i == 0:   # First Branch
+                        out += self.TREE_GUIDES[1] + os.linesep
+
+                    elif i == len(out_brds) - 1:   # Last Branch
+                        out += self.TREE_GUIDES[3] + os.linesep
+
+                    else:
+
+                        # Extend edge down while there is downstream branching in child nodes
+                        # But run loop at least once.
+                        for _ in range((brd - base_brd) - i + 1):
+                            out += (self.TREE_GUIDES[4] + os.linesep)  * (self.node_height - 1)
+
+                        out += self.TREE_GUIDES[2] + os.linesep
+        
+        print(out)
         #return Panel(out)
         return Text(out)
 
@@ -131,18 +183,6 @@ class GraphNode(Container):
         yield Static(self.text)
         yield ButtonContainer(node_id=self.id)
 
-
-class GraphNodeSpacer(Container):
-    """A placeholder to position GraphNodes"""
-    DEFAULT_CSS = """
-    GraphNodeSpacer {
-        height: 5;
-        width: 20;
-    }
-    """
-
-    def compose(self) -> ComposeResult:
-        yield Static()
 
 class GraphView(ScrollableContainer):
     """Container for the graph visualization with horizontal scrolling."""
@@ -239,13 +279,15 @@ class GraphView(ScrollableContainer):
         self._unvisit_graph()
         self._layout_graph()
 
-        import json
-        yield Static("GraphView. Size: " + str(len(self.graph)) + "Node Data: " + json.dumps(nx.get_node_attributes(self.graph, "depth")))
         with Horizontal(id="graph_container"):
             layers = nx.bfs_layers(self.graph, "node0")
+
             for i, layer in enumerate(layers):
+                # TODO: Can this be avoided by recycling next_layer from below?
+                layer = sorted(layer, key=lambda n: self.graph.nodes[n].get("breadth", 0))
+                
+                # Draw Nodes
                 with Vertical(id=f"vrt_nds_{i}"):
-                    layer = sorted(layer, key=lambda n: self.graph.nodes[n].get("breadth", 0))
                     tot_breadth = 0
                     for j, node in enumerate(layer):
 
@@ -269,5 +311,23 @@ class GraphView(ScrollableContainer):
                         
                         # TODO: Draw the edges
 
+                # Draw edges
                 with Vertical(id=f"vrt_egs_{node}"):
-                    yield GraphEdge(out_degree=1, node_height=5, classes="graph_edge")
+
+                    if i == len(layer) - 1:
+                        # Leaves, don't draw edges
+                        continue
+                    
+                    else:
+                        # Construct next layer
+                        next_layer = [
+                            list(sorted(map(lambda e: e[1], self.graph.out_edges(n)),
+                                   key=lambda n: self.graph.nodes[n].get("breadth", 0)))
+                            for n in layer
+                        ]
+                        #layers[i+1] = next_layer  # keep the sorting
+
+                        in_breadths = list(map(lambda n: self.graph.nodes[n].get("breadth"), layer))
+                        out_breadths = [list(map(lambda n: self.graph.nodes[n].get("breadth"), descs)) for descs in next_layer]
+
+                        yield GraphEdge(in_breadths=in_breadths, out_breadths=out_breadths, node_height=5)
