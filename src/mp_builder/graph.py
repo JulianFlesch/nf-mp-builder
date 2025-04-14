@@ -50,7 +50,8 @@ class GraphEdge(Widget):
         '─┬→',
         ' ├→',
         ' └→',
-        ' │ '
+        ' │ ',
+        '   '
     ]
 
     DEFAULT_CSS = """
@@ -59,6 +60,7 @@ class GraphEdge(Widget):
     }
     """
     def __init__(self, in_breadths: list[int], out_breadths: list[list[int]], node_height: int=5, *args, **kwargs):
+        assert(len(out_breadths) == len(in_breadths))
         self.in_breadths = in_breadths
         self.out_breadths = out_breadths
         self.node_height = node_height
@@ -66,33 +68,38 @@ class GraphEdge(Widget):
 
     def render(self) -> RenderableType:
         """Render the edge as an arrow pointing to the target node."""
-
         out = os.linesep * (self.node_height // 2)
 
-        for in_brd, out_brds in zip(self.in_breadths, self.out_breadths):
+        for b in range(len(self.out_breadths)):
+            out_brds = self.out_breadths[b]
+            in_brd = self.in_breadths[b]
             
-            if len(out_brds) == 1:
+            if len(out_brds) == 0:              # HAS NO CHILDREN
+                out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height - 1)
+
+            if len(out_brds) == 1:              # HAS EXACTLY ONE CHILD
                 out += self.TREE_GUIDES[0]
 
-            elif len(out_brds) > 1:
-                base_brd = out_brds[0]
+            elif len(out_brds) > 1:             # HAS MANY CHILDREN
                 for i, brd in enumerate(out_brds):
                     if i == 0:   # First Branch
                         out += self.TREE_GUIDES[1] + os.linesep
-
-                    elif i == len(out_brds) - 1:   # Last Branch
-                        out += self.TREE_GUIDES[3] + os.linesep
 
                     else:
 
                         # Extend edge down while there is downstream branching in child nodes
                         # But run loop at least once.
-                        for _ in range((brd - base_brd) - i + 1):
+                        for _ in range(i - (brd - in_brd) + 1):
                             out += (self.TREE_GUIDES[4] + os.linesep)  * (self.node_height - 1)
 
-                        out += self.TREE_GUIDES[2] + os.linesep
-        
-        print(out)
+                        if i == len(out_brds) - 1:   # Last branch
+                            out += self.TREE_GUIDES[3] + os.linesep
+                        
+                        else:                        # More branches below
+                            out += self.TREE_GUIDES[2] + os.linesep
+                
+                out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height - 1)
+
         #return Panel(out)
         return Text(out)
 
@@ -280,7 +287,7 @@ class GraphView(ScrollableContainer):
         self._layout_graph()
 
         with Horizontal(id="graph_container"):
-            layers = nx.bfs_layers(self.graph, "node0")
+            layers = list(nx.bfs_layers(self.graph, "node0"))
 
             for i, layer in enumerate(layers):
                 # TODO: Can this be avoided by recycling next_layer from below?
@@ -314,7 +321,7 @@ class GraphView(ScrollableContainer):
                 # Draw edges
                 with Vertical(id=f"vrt_egs_{node}"):
 
-                    if i == len(layer) - 1:
+                    if i == len(layers) - 1:
                         # Leaves, don't draw edges
                         continue
                     
