@@ -64,7 +64,6 @@ class MetaPipelinesApp(App):
             graph_view.refresh(recompose=True)
             
             # Make sure the view scrolls to show the new node
-            #scroll_to_node(graph_view, new_node_id)
             graph_view.call_after_refresh(self.scroll_to_node, graph_view, new_node_id)
 
         #except NoMatches:
