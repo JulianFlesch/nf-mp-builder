@@ -74,31 +74,40 @@ class GraphEdge(Widget):
             out_brds = self.out_breadths[b]
             in_brd = self.in_breadths[b]
             
+            # TODO: Account for gap between boxes?
+
+            # TODO: Edge case when grand-parent node has many children but only one path goes on: Not represented by self.out_breadths
+
+            # TODO: Add case for space above node / edge
+
             if len(out_brds) == 0:              # HAS NO CHILDREN
-                out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height - 1)
+                out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height)
 
             if len(out_brds) == 1:              # HAS EXACTLY ONE CHILD
                 out += self.TREE_GUIDES[0]
+                out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height)
 
             elif len(out_brds) > 1:             # HAS MANY CHILDREN
                 for i, brd in enumerate(out_brds):
                     if i == 0:   # First Branch
                         out += self.TREE_GUIDES[1] + os.linesep
+                        out += (self.TREE_GUIDES[4] + os.linesep) * (self.node_height - 1)
 
                     else:
 
                         # Extend edge down while there is downstream branching in child nodes
                         # But run loop at least once.
-                        for _ in range(i - (brd - in_brd) + 1):
-                            out += (self.TREE_GUIDES[4] + os.linesep)  * (self.node_height - 1)
+                        #for _ in range(brd - out_brds[i-1]):
+                        for _ in range(brd - i  - out_brds[i-1]):
+                            out += (self.TREE_GUIDES[4] + os.linesep) * (self.node_height)
 
                         if i == len(out_brds) - 1:   # Last branch
                             out += self.TREE_GUIDES[3] + os.linesep
-                        
+                            out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height - 1)
+
                         else:                        # More branches below
                             out += self.TREE_GUIDES[2] + os.linesep
-                
-                out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height - 1)
+                            out += (self.TREE_GUIDES[4] + os.linesep) * (self.node_height - 1)
 
         #return Panel(out)
         return Text(out)
