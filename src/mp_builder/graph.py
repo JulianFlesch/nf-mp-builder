@@ -89,8 +89,7 @@ class GraphEdge(Widget):
             if len(out_brds) == 0:              # HAS NO CHILDREN
                 #out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height)
                 # out += ("NO" + os.linesep) * (self.node_height)
-                #out += "NO" + os.linesep
-                pass
+                out += "NO" + os.linesep
 
             if len(out_brds) == 1:              # HAS EXACTLY ONE CHILD
                 out += self.TREE_GUIDES[0] + os.linesep
