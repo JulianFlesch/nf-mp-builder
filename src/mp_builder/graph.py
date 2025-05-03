@@ -68,9 +68,9 @@ class GraphEdge(Widget):
 
     def render(self) -> RenderableType:
         """Render the edge as an arrow pointing to the target node."""
-        debug_output = True
-
-        out = ("ST" + os.linesep) * (self.node_height // 2)
+        debug_output = False
+    
+        out = ("ST" if debug_output else "" + os.linesep) * (self.node_height // 2)
 
         for b in range(len(self.out_breadths)):
             out_brds = self.out_breadths[b]
