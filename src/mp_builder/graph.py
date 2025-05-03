@@ -106,13 +106,11 @@ class GraphEdge(Widget):
 
                         # Extend edge down while there is downstream branching in child nodes
                         # for _ in range(brd - out_brds[i-1]):
-                        # TODO: BUG: One line to many is drawn here. 
+                        out += ("EX2" + os.linesep) * (self.node_height - 1)
                         for _ in range(child_brd - out_brds[i-1] - 1):
                             #out += (self.TREE_GUIDES[4] + os.linesep) * self.node_height
                             out += ("EX" + os.linesep) * (self.node_height)
                         
-                        out += ("EX2" + os.linesep) * (self.node_height - 1)
-
                         if i == len(out_brds) - 1:   # Last branch
                             out += self.TREE_GUIDES[3] + os.linesep
                             #out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height - 1)
