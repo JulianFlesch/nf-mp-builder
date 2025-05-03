@@ -82,9 +82,9 @@ class GraphEdge(Widget):
                     prev_brd = self.in_breadths[b - 1]
 
             for j in range(in_brd - prev_brd):
-                mult = self.node_height if j > 0 else (self.node_height - 1)
+                mult = self.node_height if j > 0 or b == 0 else (self.node_height - 1)
                 #out += (self.TREE_GUIDES[5] + os.linesep) * self.node_height
-                out += ("SP" + str(prev_brd) + os.linesep) * mult
+                out += ("SP" + os.linesep) * mult
             
             if len(out_brds) == 0:              # HAS NO CHILDREN
                 #out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height)
