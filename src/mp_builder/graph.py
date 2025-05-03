@@ -79,9 +79,10 @@ class GraphEdge(Widget):
             if b > 0:
                 prev_in_brd = self.in_breadths[b - 1]
 
-            for _ in range(in_brd - prev_in_brd):
+            for j in range(in_brd - prev_in_brd - 1):
+                mult = self.node_height if j > 0 else (self.node_height - 1)
                 #out += (self.TREE_GUIDES[5] + os.linesep) * self.node_height
-                out += ("SP" + os.linesep) * self.node_height
+                out += ("SP" + os.linesep) * mult
             
             # TODO: Add case for space above node / edge
 
@@ -106,10 +107,10 @@ class GraphEdge(Widget):
 
                         # Extend edge down while there is downstream branching in child nodes
                         # for _ in range(brd - out_brds[i-1]):
-                        out += ("EX2" + os.linesep) * (self.node_height - 1)
-                        for _ in range(child_brd - out_brds[i-1] - 1):
+                        for j in range(child_brd - out_brds[i-1]):
                             #out += (self.TREE_GUIDES[4] + os.linesep) * self.node_height
-                            out += ("EX" + os.linesep) * (self.node_height)
+                            mult = self.node_height if j > 0 else (self.node_height - 1)
+                            out += ("EX" + os.linesep) * mult
                         
                         if i == len(out_brds) - 1:   # Last branch
                             out += self.TREE_GUIDES[3] + os.linesep
