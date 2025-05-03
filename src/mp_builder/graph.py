@@ -68,46 +68,55 @@ class GraphEdge(Widget):
 
     def render(self) -> RenderableType:
         """Render the edge as an arrow pointing to the target node."""
-        out = os.linesep * (self.node_height // 2)
+        out = ("ST" + os.linesep) * (self.node_height // 2)
 
         for b in range(len(self.out_breadths)):
             out_brds = self.out_breadths[b]
             in_brd = self.in_breadths[b]
-            
-            # TODO: Account for gap between boxes?
 
             # TODO: Edge case when grand-parent node has many children but only one path goes on: Not represented by self.out_breadths
+            prev_in_brd = 0
+            if b > 0:
+                prev_in_brd = self.in_breadths[b - 1]
 
+            for _ in range(in_brd - prev_in_brd - 1):
+                #out += (self.TREE_GUIDES[5] + os.linesep) * self.node_height
+                out += ("SP" + os.linesep) * self.node_height
+            
             # TODO: Add case for space above node / edge
 
             if len(out_brds) == 0:              # HAS NO CHILDREN
-                out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height)
+                #out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height)
+                out += ("NO" + os.linesep) * (self.node_height)
 
             if len(out_brds) == 1:              # HAS EXACTLY ONE CHILD
-                out += self.TREE_GUIDES[0]
-                out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height)
+                out += self.TREE_GUIDES[0] + os.linesep
+                #out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height - 1)
+                out += ("ON" + os.linesep) * (self.node_height - 1)
 
             elif len(out_brds) > 1:             # HAS MANY CHILDREN
-                for i, brd in enumerate(out_brds):
+                for i, child_brd in enumerate(out_brds):
                     if i == 0:   # First Branch
                         out += self.TREE_GUIDES[1] + os.linesep
-                        out += (self.TREE_GUIDES[4] + os.linesep) * (self.node_height - 1)
-
+                        #out += (self.TREE_GUIDES[4] + os.linesep) * (self.node_height - 1)
+                        out += ("FI" + os.linesep) * (self.node_height - 1)
                     else:
 
                         # Extend edge down while there is downstream branching in child nodes
-                        # But run loop at least once.
-                        #for _ in range(brd - out_brds[i-1]):
-                        for _ in range(brd - i  - out_brds[i-1]):
-                            out += (self.TREE_GUIDES[4] + os.linesep) * (self.node_height)
+                        # for _ in range(brd - out_brds[i-1]):
+                        for _ in range(child_brd - out_brds[i-1] - 1):
+                            #out += (self.TREE_GUIDES[4] + os.linesep) * self.node_height
+                            out += ("EX" + os.linesep) * self.node_height
 
                         if i == len(out_brds) - 1:   # Last branch
                             out += self.TREE_GUIDES[3] + os.linesep
-                            out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height - 1)
+                            #out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height - 1)
+                            out += ("LA" + os.linesep) * (self.node_height - 1)
 
                         else:                        # More branches below
                             out += self.TREE_GUIDES[2] + os.linesep
-                            out += (self.TREE_GUIDES[4] + os.linesep) * (self.node_height - 1)
+                            #out += (self.TREE_GUIDES[4] + os.linesep) * (self.node_height - 1)
+                            out += ("MO" + os.linesep) * (self.node_height - 1)
 
         #return Panel(out)
         return Text(out)
