@@ -79,7 +79,7 @@ class GraphEdge(Widget):
             if b > 0:
                 prev_in_brd = self.in_breadths[b - 1]
 
-            for _ in range(in_brd - prev_in_brd - 1):
+            for _ in range(in_brd - prev_in_brd):
                 #out += (self.TREE_GUIDES[5] + os.linesep) * self.node_height
                 out += ("SP" + os.linesep) * self.node_height
             
@@ -87,36 +87,41 @@ class GraphEdge(Widget):
 
             if len(out_brds) == 0:              # HAS NO CHILDREN
                 #out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height)
-                out += ("NO" + os.linesep) * (self.node_height)
+                # out += ("NO" + os.linesep) * (self.node_height)
+                #out += "NO" + os.linesep
+                pass
 
             if len(out_brds) == 1:              # HAS EXACTLY ONE CHILD
                 out += self.TREE_GUIDES[0] + os.linesep
                 #out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height - 1)
-                out += ("ON" + os.linesep) * (self.node_height - 1)
+                #out += ("ON" + os.linesep) * (self.node_height - 1)
 
             elif len(out_brds) > 1:             # HAS MANY CHILDREN
                 for i, child_brd in enumerate(out_brds):
                     if i == 0:   # First Branch
                         out += self.TREE_GUIDES[1] + os.linesep
                         #out += (self.TREE_GUIDES[4] + os.linesep) * (self.node_height - 1)
-                        out += ("FI" + os.linesep) * (self.node_height - 1)
+                        #out += ("FI" + os.linesep) * (self.node_height - 1)
                     else:
 
                         # Extend edge down while there is downstream branching in child nodes
                         # for _ in range(brd - out_brds[i-1]):
+                        # TODO: BUG: One line to many is drawn here. 
                         for _ in range(child_brd - out_brds[i-1] - 1):
                             #out += (self.TREE_GUIDES[4] + os.linesep) * self.node_height
-                            out += ("EX" + os.linesep) * self.node_height
+                            out += ("EX" + os.linesep) * (self.node_height)
+                        
+                        out += ("EX2" + os.linesep) * (self.node_height - 1)
 
                         if i == len(out_brds) - 1:   # Last branch
                             out += self.TREE_GUIDES[3] + os.linesep
                             #out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height - 1)
-                            out += ("LA" + os.linesep) * (self.node_height - 1)
+                            #out += ("LA" + os.linesep) * (self.node_height - 1)
 
                         else:                        # More branches below
                             out += self.TREE_GUIDES[2] + os.linesep
                             #out += (self.TREE_GUIDES[4] + os.linesep) * (self.node_height - 1)
-                            out += ("MO" + os.linesep) * (self.node_height - 1)
+                            #out += ("MO" + os.linesep) * (self.node_height - 1)
 
         #return Panel(out)
         return Text(out)
