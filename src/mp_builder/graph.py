@@ -46,12 +46,12 @@ class GraphEdge(Widget):
     ]
 
     TREE_GUIDES = [
-        '──→',
-        '─┬→',
-        ' ├→',
-        ' └→',
-        ' │ ',
-        '   '
+        '────→',
+        '──┬─→',
+        '  ├─→',
+        '  └─→',
+        '  │  ',
+        '     '
     ]
 
     DEFAULT_CSS = """
@@ -74,18 +74,18 @@ class GraphEdge(Widget):
             out_brds = self.out_breadths[b]
             in_brd = self.in_breadths[b]
 
-            # TODO: Edge case when grand-parent node has many children but only one path goes on: Not represented by self.out_breadths
-            prev_in_brd = 0
+            prev_brd = 0
             if b > 0:
-                prev_in_brd = self.in_breadths[b - 1]
+                if len(self.out_breadths[b - 1]) > 0:
+                    prev_brd = self.out_breadths[b - 1][-1]
+                else:
+                    prev_brd = self.in_breadths[b - 1]
 
-            for j in range(in_brd - prev_in_brd):
+            for j in range(in_brd - prev_brd):
                 mult = self.node_height if j > 0 else (self.node_height - 1)
                 #out += (self.TREE_GUIDES[5] + os.linesep) * self.node_height
-                out += ("SP" + os.linesep) * mult
+                out += ("SP" + str(prev_brd) + os.linesep) * mult
             
-            # TODO: Add case for space above node / edge
-
             if len(out_brds) == 0:              # HAS NO CHILDREN
                 #out += (self.TREE_GUIDES[5] + os.linesep) * (self.node_height)
                 # out += ("NO" + os.linesep) * (self.node_height)
