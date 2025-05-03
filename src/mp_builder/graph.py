@@ -79,7 +79,7 @@ class GraphEdge(Widget):
             if b > 0:
                 prev_in_brd = self.in_breadths[b - 1]
 
-            for j in range(in_brd - prev_in_brd - 1):
+            for j in range(in_brd - prev_in_brd):
                 mult = self.node_height if j > 0 else (self.node_height - 1)
                 #out += (self.TREE_GUIDES[5] + os.linesep) * self.node_height
                 out += ("SP" + os.linesep) * mult
