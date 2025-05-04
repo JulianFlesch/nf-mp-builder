@@ -14,6 +14,8 @@ from rich.align import Align
 
 NODE_HEIGHT = 5
 NODE_WIDTH = 50
+DEBUG_SYMBOLS = False
+DEBUG_OUTLINES = False
 
 class GraphNodeSpacer(Static):
     """A placeholder to position GraphNodes"""
@@ -54,9 +56,8 @@ class GraphEdge(Widget):
 
     def render(self) -> RenderableType:
         """Render the edge as an arrow pointing to the target node."""
-        debug_output = False
     
-        out = ("ST" if debug_output else "" + os.linesep) * (self.node_height // 2)
+        out = ("ST" if DEBUG_SYMBOLS else "" + os.linesep) * (self.node_height // 2)
 
         for b in range(len(self.out_breadths)):
             out_brds = self.out_breadths[b]
@@ -71,11 +72,11 @@ class GraphEdge(Widget):
 
             for j in range(in_brd - prev_brd):
                 mult = self.node_height if j > 0 or b == 0 else (self.node_height - 1)
-                symbol = self.TREE_GUIDES[5] if not debug_output else "SP"
+                symbol = self.TREE_GUIDES[5] if not DEBUG_SYMBOLS else "SP"
                 out += (symbol + os.linesep) * mult
             
             if len(out_brds) == 0:              # HAS NO CHILDREN
-                symbol = self.TREE_GUIDES[5] if not debug_output else "NO"
+                symbol = self.TREE_GUIDES[5] if not DEBUG_SYMBOLS else "NO"
                 out += symbol + os.linesep
 
             if len(out_brds) == 1:              # HAS EXACTLY ONE CHILD
@@ -92,7 +93,7 @@ class GraphEdge(Widget):
                         # for _ in range(brd - out_brds[i-1]):
                         for j in range(child_brd - out_brds[i-1]):
                             mult = self.node_height if j > 0 else (self.node_height - 1)
-                            symbol = self.TREE_GUIDES[4] if not debug_output else "EX"
+                            symbol = self.TREE_GUIDES[4] if not DEBUG_SYMBOLS else "EX"
                             out += (symbol + os.linesep) * mult
                         
                         if i == len(out_brds) - 1:   # Last branch
@@ -198,27 +199,27 @@ class GraphNode(Container):
 class GraphView(ScrollableContainer):
     """Container for the graph visualization with horizontal scrolling."""
     
-    DEFAULT_CSS = """
-    GraphView {
+    DEFAULT_CSS = f"""
+    GraphView {{
         overflow: scroll scroll; /* Explicitly allow both scrollbars */
-        border: thick $accent-darken-2; /* Debugging border */
+        {"border: thick $accent-darken-2; /* Debugging border */" if DEBUG_OUTLINES else ""}
         height: 100%;
         width: 100%;
-    }
+    }}
 
-    GraphView > Horizontal {
+    GraphView > Horizontal {{
         /* Let this container size itself based on its content */
         width: auto;
         height: auto;
         /* Add some visual space between columns if desired */
         /* grid-gutter-horizontal: 5; */ /* If using grid layout */
         /* Or use margin on Vertical below */
-        border: thick $accent; /* Debugging border */
+        {"border: thick $accent-darken-2; /* Debugging border */" if DEBUG_OUTLINES else ""}
         content-align: center middle;
-    }
+    }}
 
     /* Each vertical column representing a layer */
-    GraphView > Horizontal > Vertical {
+    GraphView > Horizontal > Vertical {{
         width: auto; /* Let column width be determined by nodes inside */
         height: auto; /* Let column height grow with nodes/spacers */
         /* border: round $accent-lighten-2; */ /* Debugging border */
@@ -226,17 +227,17 @@ class GraphView(ScrollableContainer):
         /* margin-right: 5; */ /* Example spacing */
         /* Align items top-center within the column */
         align: center top;
-    }
+    }}
 
-    GraphView > Horizontal > Vertical > GraphEdge {
+    GraphView > Horizontal > Vertical > GraphEdge {{
         max-width: 8;
         height: auto;
         content-align: center middle;
-    }
+    }}
 
-    Placeholder {
+    Placeholder {{
         height: 5;
-    }
+    }}
     """
     graph: nx.DiGraph
 
