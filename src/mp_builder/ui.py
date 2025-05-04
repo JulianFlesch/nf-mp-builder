@@ -83,9 +83,10 @@ class MetaPipelinesApp(App):
                 return
             
             # Remove node (and all its edges)
-            # TODO: Remove disconnected nodes 
-            # (They won't be drawn, but are still in the graph)
+            to_remove = nx.descendants(self.graph, node_id)
             self.graph.remove_node(node_id)
+            for n in to_remove:
+                self.graph.remove_node(n)
 
             # Redraw the graph
             graph_view = self.query_one(GraphView)
