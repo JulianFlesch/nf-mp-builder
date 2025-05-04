@@ -13,18 +13,18 @@ from rich.console import RenderableType
 from rich.text import Text
 from rich.align import Align
 
-NODE_HEIGHT = 5
+NODE_HEIGHT = 7
 NODE_WIDTH = 50
 DEBUG_SYMBOLS = False
 DEBUG_OUTLINES = False
 
 class GraphNodeSpacer(Static):
     """A placeholder to position GraphNodes"""
-    DEFAULT_CSS = """
-    GraphNodeSpacer {
-        height: 5;
-        width: 20;
-    }
+    DEFAULT_CSS = f"""
+    GraphNodeSpacer {{
+        height: {NODE_HEIGHT};
+        width: {NODE_WIDTH};
+    }}
     """
 
     def compose(self) -> ComposeResult:
@@ -48,17 +48,16 @@ class GraphEdge(Widget):
         width: 8
     }
     """
-    def __init__(self, in_breadths: list[int], out_breadths: list[list[int]], node_height: int=5, *args, **kwargs):
+    def __init__(self, in_breadths: list[int], out_breadths: list[list[int]], *args, **kwargs):
         assert(len(out_breadths) == len(in_breadths))
         self.in_breadths = in_breadths
         self.out_breadths = out_breadths
-        self.node_height = node_height
         super().__init__(*args, **kwargs)
 
     def render(self) -> RenderableType:
         """Render the edge as an arrow pointing to the target node."""
     
-        out = ("ST" if DEBUG_SYMBOLS else "" + os.linesep) * (self.node_height // 2)
+        out = ("ST" if DEBUG_SYMBOLS else "" + os.linesep) * (NODE_HEIGHT // 2)
 
         for b in range(len(self.out_breadths)):
             out_brds = self.out_breadths[b]
@@ -72,7 +71,7 @@ class GraphEdge(Widget):
                     prev_brd = self.in_breadths[b - 1]
 
             for j in range(in_brd - prev_brd):
-                mult = self.node_height if j > 0 or b == 0 else (self.node_height - 1)
+                mult = NODE_HEIGHT if j > 0 or b == 0 else (NODE_HEIGHT - 1)
                 symbol = self.TREE_GUIDES[5] if not DEBUG_SYMBOLS else "SP"
                 out += (symbol + os.linesep) * mult
             
@@ -93,7 +92,7 @@ class GraphEdge(Widget):
                         # Extend edge down while there is downstream branching in child nodes
                         # for _ in range(brd - out_brds[i-1]):
                         for j in range(child_brd - out_brds[i-1]):
-                            mult = self.node_height if j > 0 else (self.node_height - 1)
+                            mult = NODE_HEIGHT if j > 0 else (NODE_HEIGHT - 1)
                             symbol = self.TREE_GUIDES[4] if not DEBUG_SYMBOLS else "EX"
                             out += (symbol + os.linesep) * mult
                         
@@ -171,6 +170,10 @@ class GraphNode(Container):
         border: solid green;
         height: {NODE_HEIGHT};
         padding: 0 0;
+    }}
+
+    GraphNode > Input {{
+        height: 3
     }}
 
     GraphNode > Input.dirty {{
@@ -348,7 +351,7 @@ class GraphView(ScrollableContainer):
                 layer = sorted(layer, key=lambda n: self.graph.nodes[n].get("breadth", 0))
                 
                 # Draw Nodes
-                with Vertical(id=f"vrt_nds_{i}"):
+                with Vertical():
                     tot_breadth = 0
                     for j, node in enumerate(layer):
 
@@ -373,7 +376,7 @@ class GraphView(ScrollableContainer):
                         # TODO: Draw the edges
 
                 # Draw edges
-                with Vertical(id=f"vrt_egs_{node}"):
+                with Vertical():
 
                     if i == len(layers) - 1:
                         # Leaves, don't draw edges
@@ -391,4 +394,4 @@ class GraphView(ScrollableContainer):
                         in_breadths = list(map(lambda n: self.graph.nodes[n].get("breadth"), layer))
                         out_breadths = [list(map(lambda n: self.graph.nodes[n].get("breadth"), descs)) for descs in next_layer]
 
-                        yield GraphEdge(in_breadths=in_breadths, out_breadths=out_breadths, node_height=5)
+                        yield GraphEdge(in_breadths=in_breadths, out_breadths=out_breadths)
