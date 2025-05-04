@@ -12,6 +12,8 @@ from rich.console import RenderableType
 from rich.text import Text
 from rich.align import Align
 
+NODE_HEIGHT = 5
+NODE_WIDTH = 50
 
 class GraphNodeSpacer(Static):
     """A placeholder to position GraphNodes"""
@@ -177,24 +179,25 @@ class ButtonContainer(Container):
 
 class GraphNode(Container):
     """A node in the graph visualization."""
-    DEFAULT_CSS = """
-    GraphNode {
-        width: 30;
+    DEFAULT_CSS = f"""
+    GraphNode {{
+        width: {NODE_WIDTH};
         border: solid green;
-        height: 5;
+        height: {NODE_HEIGHT};
         padding: 0 0;
-    }
+    }}
     
-    GraphNode > Static {
+    GraphNode > Static {{
         width: 75%;
-    }
+    }}
     
-    GraphNode > ButtonContainer {
+    GraphNode > ButtonContainer {{
         dock: right;
-        width: 7;
+        width: 10%;
+        min-width: 7;
         height: 100%;
         padding: 0 0;
-    }
+    }}
     """
     def __init__(self, text: str=None, *args, **kwargs):
         self.text = text
