@@ -30,22 +30,6 @@ class GraphNodeSpacer(Static):
 
 class GraphEdge(Widget):
     """Represents an edge between two nodes."""
-    
-    #ASCII_GUIDES = ("    ", "|   ", "+-- ", "`-- ")
-
-    ELEMENTS = [
-        '─', # Box Drawings Light Horizontal
-        '│', # Box Drawings Light Vertical
-        '┌', # Box Drawings Light Down and Right
-        '┐', # Box Drawings Light Down and Left
-        '└', # Box Drawings Light Up and Right
-        '┘', # Box Drawings Light Up and Left
-        '├', # Box Drawings Light Vertical and Right
-        '┤', # Box Drawings Light Vertical and Left
-        '┬', # Box Drawings Light Down and Horizontal
-        '┴', # Box Drawings Light Up and Horizontal
-        '┼', # Box Drawings Light Vertical and Horizontal (Cross)
-    ]
 
     TREE_GUIDES = [
         '────→',
