@@ -179,7 +179,7 @@ class GraphNode(Container):
     """A node in the graph visualization."""
     DEFAULT_CSS = """
     GraphNode {
-        width: 20;
+        width: 30;
         border: solid green;
         height: 5;
         padding: 0 0;
@@ -191,7 +191,7 @@ class GraphNode(Container):
     
     GraphNode > ButtonContainer {
         dock: right;
-        width: 40%;
+        width: 7;
         height: 100%;
         padding: 0 0;
     }
