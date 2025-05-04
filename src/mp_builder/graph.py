@@ -189,20 +189,21 @@ class GraphNode(Container):
         padding: 0 0;
     }}
     """
-    def __init__(self, text: str=None, *args, **kwargs):
+    def __init__(self, node_data: dict, text: str=None, *args, **kwargs):
+        self.node_data = node_data
         self.text = text
         self._is_dirty = False
         super().__init__(*args, **kwargs)
-        self._display_name = self.id
+        # wait for superclass for id to be initialized
         self._input_id = f"input-{self.id}"
 
     @property
     def name(self):
-        return self._display_name
-
+        return self.node_data.get("name", self.id)
+    
     @name.setter
-    def display_name(self, val: str):
-        self._display_name = val
+    def name(self, value: str):
+        self.node_data["name"] = value
 
     def compose(self) -> ComposeResult:
 
@@ -231,7 +232,7 @@ class GraphNode(Container):
         input_widget.remove_class("dirty")
 
         # --- Perform your desired action here ---
-        self.notify(f"Enter pressed on Input in Node '{self.id}'. New potential ID: '{self._display_name}'")
+        self.notify(f"Enter pressed on Input in Node '{self.id}'. New potential ID: '{self.name}'")
 
     def on_input_changed(self, event: Input.Changed) -> None:
         """Called whenever the Input value changes."""
@@ -367,7 +368,7 @@ class GraphView(ScrollableContainer):
                             yield GraphNodeSpacer()
 
                         # Draw the node
-                        yield GraphNode(text=f"d:{node_depth} b: {node_breadth}", id=f"{node}")                        
+                        yield GraphNode(text=f"d:{node_depth} b: {node_breadth}", id=f"{node}", node_data=self.graph.nodes[node])
                         
                         # TODO: Draw the edges
 
