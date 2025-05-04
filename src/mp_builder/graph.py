@@ -3,6 +3,7 @@ from textual.containers import Container, Vertical, VerticalScroll, ScrollableCo
 from textual.widgets import Button, Static, Label, Placeholder, Input
 from textual.widget import Widget
 from textual.reactive import reactive
+from textual import on
 
 import networkx as nx
 import os
@@ -171,6 +172,10 @@ class GraphNode(Container):
         height: {NODE_HEIGHT};
         padding: 0 0;
     }}
+
+    GraphNode > Input.dirty {{
+        border: dashed yellow; /* Indicate unsaved changes */
+    }}
     
     GraphNode > Static {{
         width: 75%;
@@ -186,14 +191,51 @@ class GraphNode(Container):
     """
     def __init__(self, text: str=None, *args, **kwargs):
         self.text = text
+        self._is_dirty = False
         super().__init__(*args, **kwargs)
+        self._display_name = self.id
+
+    def _get_input_id(self):
+        return f"input-{self.id}"
 
     def compose(self) -> ComposeResult:
 
         #    yield Static(self.id)
-        yield Input(value=self.id)
+        yield Input(value=self._display_name, id=self._get_input_id())
         yield Static(self.text)
         yield ButtonContainer(node_id=self.id)
+
+    def _update_dirty_state(self, new_value):
+        is_now_dirty = new_value != self._display_name
+
+        if is_now_dirty != self._is_dirty:
+            input_widget = self.query_one(f"#{self._get_input_id()}")
+            self._is_dirty = is_now_dirty
+            input_widget.set_class(is_now_dirty, "dirty")
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle the Input submitted event (Enter pressed)."""
+        # Prevent the event from bubbling further up the DOM
+        # if you don't want parent widgets to react to it.
+        event.stop()
+
+        self._display_name = event.value.strip()
+        self._is_dirty = False
+        input_widget = self.query_one(f"#{self._get_input_id()}")
+        input_widget.remove_class("dirty")
+
+        # --- Perform your desired action here ---
+        self.notify(f"Enter pressed on Input in Node '{self.id}'. New potential ID: '{self._display_name}'")
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Called whenever the Input value changes."""
+
+        # Only react to changes in our specific input
+        if event.input.id == self._get_input_id():
+
+            #TODO: Check if we can actually access the value
+            self._update_dirty_state(event.input.value)
+            event.stop() # Stop propagation if needed
 
 
 class GraphView(ScrollableContainer):
