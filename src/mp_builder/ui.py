@@ -4,6 +4,7 @@ from textual.css.query import NoMatches
 import networkx as nx
 
 from mp_builder.graph import GraphView
+from mp_builder.utils import save_graph_to_file, load_gaph_from_file
 
 class MetaPipelinesApp(App):
     """Main application for graph visualization."""
@@ -18,8 +19,8 @@ class MetaPipelinesApp(App):
         ("q", "quit", "Quit"),
         ("w", "write_graph", "Save"),
         ("o", "load_graph", "Open"),
-        ("z", "undo", "Undo"),
-        ("y", "redo", "Redo")
+        ("ctrl+z", "undo", "Undo"),
+        ("ctrl+y", "redo", "Redo")
     ]
     
     def __init__(self, graph: nx.DiGraph):
@@ -101,9 +102,18 @@ class MetaPipelinesApp(App):
 
     def action_write_graph(self):
         self.notify("write_graph Action (DUMMY)")
+        file = "mp-builder-graph.json"
+        save_graph_to_file(self.graph, file)
 
     def action_load_graph(self):
         self.notify("load_graph action (DUMMY)")
+        file = "mp-builder-graph.json"
+        self.graph = load_gaph_from_file(file).copy()
+        
+        # Redraw the graph
+        graph_view = self.query_one(GraphView)
+        graph_view.graph = self.graph
+        graph_view.refresh(recompose=True)
 
     def action_undo(self):
         self.notify("undo action (DUMMY)")
