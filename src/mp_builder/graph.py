@@ -194,22 +194,28 @@ class GraphNode(Container):
         self._is_dirty = False
         super().__init__(*args, **kwargs)
         self._display_name = self.id
+        self._input_id = f"input-{self.id}"
 
-    def _get_input_id(self):
-        return f"input-{self.id}"
+    @property
+    def name(self):
+        return self._display_name
+
+    @name.setter
+    def display_name(self, val: str):
+        self._display_name = val
 
     def compose(self) -> ComposeResult:
 
         #    yield Static(self.id)
-        yield Input(value=self._display_name, id=self._get_input_id())
+        yield Input(value=self.name, id=self._input_id)
         yield Static(self.text)
         yield ButtonContainer(node_id=self.id)
 
     def _update_dirty_state(self, new_value):
-        is_now_dirty = new_value != self._display_name
+        is_now_dirty = new_value != self.name
 
         if is_now_dirty != self._is_dirty:
-            input_widget = self.query_one(f"#{self._get_input_id()}")
+            input_widget = self.query_one(f"#{self._input_id}")
             self._is_dirty = is_now_dirty
             input_widget.set_class(is_now_dirty, "dirty")
 
@@ -219,9 +225,9 @@ class GraphNode(Container):
         # if you don't want parent widgets to react to it.
         event.stop()
 
-        self._display_name = event.value.strip()
+        self.name = event.value.strip()
         self._is_dirty = False
-        input_widget = self.query_one(f"#{self._get_input_id()}")
+        input_widget = self.query_one(f"#{self._input_id}")
         input_widget.remove_class("dirty")
 
         # --- Perform your desired action here ---
@@ -231,7 +237,7 @@ class GraphNode(Container):
         """Called whenever the Input value changes."""
 
         # Only react to changes in our specific input
-        if event.input.id == self._get_input_id():
+        if event.input.id == self._input_id:
 
             #TODO: Check if we can actually access the value
             self._update_dirty_state(event.input.value)
