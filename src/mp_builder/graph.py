@@ -114,7 +114,6 @@ class AddNodeButton(Button):
         width: 50%;
         max-width: 3;
         height: 100%;
-        max-height: 3;
         content-align: center middle;
         background: green;
         color: white;
@@ -130,7 +129,6 @@ class RemoveNodeButton(Button):
         width: 50%;
         max-width: 3;
         height: 100%;
-        max-height: 3;
         content-align: center middle;
         background: red;
         color: white;
@@ -145,10 +143,12 @@ class ButtonContainer(Container):
 
     DEFAULT_CSS = """
     ButtonContainer > AddNodeButton {
+        height: 100%;
         dock: left;
     }
     
     ButtonContainer > RemoveNodeButton {
+        height: 100%;
         dock: right;
     }
     """
@@ -173,7 +173,7 @@ class GraphNode(Container):
     }}
 
     GraphNode > Input {{
-        height: 3
+        min-height: 3
     }}
 
     GraphNode > Input.dirty {{
@@ -211,8 +211,8 @@ class GraphNode(Container):
     def compose(self) -> ComposeResult:
 
         #    yield Static(self.id)
-        yield Input(value=self.name, id=self._input_id)
         yield Static(self.text)
+        yield Input(value=self.name, id=self._input_id)
         yield ButtonContainer(node_id=self.id)
 
     def _update_dirty_state(self, new_value):
@@ -371,7 +371,7 @@ class GraphView(ScrollableContainer):
                             yield GraphNodeSpacer()
 
                         # Draw the node
-                        yield GraphNode(text=f"d:{node_depth} b: {node_breadth}", id=f"{node}", node_data=self.graph.nodes[node])
+                        yield GraphNode(text=f"{node} d:{node_depth} b: {node_breadth}", id=f"{node}", node_data=self.graph.nodes[node])
                         
                         # TODO: Draw the edges
 
