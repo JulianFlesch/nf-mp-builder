@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container, Vertical, VerticalScroll, ScrollableContainer, HorizontalScroll, Horizontal
-from textual.widgets import Button, Static, Label, Placeholder
+from textual.widgets import Button, Static, Label, Placeholder, Input
 from textual.widget import Widget
 from textual.reactive import reactive
 
@@ -172,8 +172,8 @@ class ButtonContainer(Container):
         self.id = "btn_ctn_" + node_id
 
     def compose(self):
-        yield AddNodeButton("+", id=f"add_btn_{self.node_id}")
-        yield RemoveNodeButton("-", id=f"remove_btn_{self.node_id}")
+        yield AddNodeButton(">", id=f"add_btn_{self.node_id}")
+        yield RemoveNodeButton("X", id=f"remove_btn_{self.node_id}")
 
 class GraphNode(Container):
     """A node in the graph visualization."""
@@ -201,7 +201,9 @@ class GraphNode(Container):
         super().__init__(*args, **kwargs)
 
     def compose(self) -> ComposeResult:
-        yield Static(self.id)
+
+        #    yield Static(self.id)
+        yield Input(value=self.id)
         yield Static(self.text)
         yield ButtonContainer(node_id=self.id)
 
