@@ -16,6 +16,10 @@ class MetaPipelinesApp(App):
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
         ("q", "quit", "Quit"),
+        ("w", "write_graph", "Save"),
+        ("o", "load_graph", "Open"),
+        ("z", "undo", "Undo"),
+        ("y", "redo", "Redo")
     ]
     
     def __init__(self, graph: nx.DiGraph):
@@ -94,3 +98,15 @@ class MetaPipelinesApp(App):
         """Scroll the view to show a specific node."""
         focused_graph_node = self.query_one(f"GraphNode#{node_id}")
         graph_view.scroll_to_widget(focused_graph_node)
+
+    def action_write_graph(self):
+        self.notify("write_graph Action (DUMMY)")
+
+    def action_load_graph(self):
+        self.notify("load_graph action (DUMMY)")
+
+    def action_undo(self):
+        self.notify("undo action (DUMMY)")
+
+    def action_redo(self):
+        self.notify("redo action (DUMMY)")
