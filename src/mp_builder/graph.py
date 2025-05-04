@@ -253,6 +253,8 @@ class GraphView(Container):
     
     DEFAULT_CSS = f"""
     GraphView {{
+        height: auto;
+        width: auto;
         {"border: thick $accent-darken-2; /* Debugging border */" if DEBUG_OUTLINES else ""}
     }}
 

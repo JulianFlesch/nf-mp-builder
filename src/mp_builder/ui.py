@@ -22,16 +22,15 @@ class MetaPipelinesApp(App):
     }}
 
     TabbedContent {{
-        height: 100%;
-        width: 100%;
         { "border: thick $accent-darken-1;" if DEBUG_OUTLINES else "" }
     }}
 
     TabPane {{
-        overflow: scroll scroll;
-        height: 100%;
-        width: 100%;
-        { "border: thick red" if DEBUG_OUTLINES else "" }
+        { "border: thick red;" if DEBUG_OUTLINES else "" }
+    }}
+
+    TabPane > ScrollableContainer {{
+        { "border: thick dodgerblue;" if DEBUG_OUTLINES else "" }
     }}
     """
     BINDINGS = [
@@ -57,11 +56,14 @@ class MetaPipelinesApp(App):
         yield Header()
         with TabbedContent():
             with TabPane("Graph"):
-                yield GraphView(self.graph)  # pass reference
+                with ScrollableContainer(id="graph-scroll"):
+                    yield GraphView(self.graph)  # pass reference
             with TabPane("Nodes"):
-                yield NodeView()
+                with ScrollableContainer(id="node-scroll"):
+                    yield NodeView()
             with TabPane("Edges"):
-                yield EdgeView()
+                with ScrollableContainer(id="edge-scroll"):
+                    yield EdgeView()
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
