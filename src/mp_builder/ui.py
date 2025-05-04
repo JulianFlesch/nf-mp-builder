@@ -1,18 +1,38 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Button, Header, Footer
+from textual.containers import ScrollableContainer
+from textual.widgets import Button, Header, Footer, TabbedContent, TabPane
 from textual.css.query import NoMatches
 import networkx as nx
 
+from mp_builder.node_view import NodeView
+from mp_builder.edge_view import EdgeView
 from mp_builder.graph import GraphView
 from mp_builder.utils import save_graph_to_file, load_gaph_from_file
+
+
+DEBUG_OUTLINES = True
+
 
 class MetaPipelinesApp(App):
     """Main application for graph visualization."""
     
-    DEFAULT_CSS = """    
-    MetaPipelinesApp {
+    DEFAULT_CSS = f"""    
+    MetaPipelinesApp {{
         background: #1f1f1f;
-    }
+    }}
+
+    TabbedContent {{
+        height: 100%;
+        width: 100%;
+        { "border: thick $accent-darken-1;" if DEBUG_OUTLINES else "" }
+    }}
+
+    TabPane {{
+        overflow: scroll scroll;
+        height: 100%;
+        width: 100%;
+        { "border: thick red" if DEBUG_OUTLINES else "" }
+    }}
     """
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
@@ -35,7 +55,13 @@ class MetaPipelinesApp(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield GraphView(self.graph)  # pass reference
+        with TabbedContent():
+            with TabPane("Graph"):
+                yield GraphView(self.graph)  # pass reference
+            with TabPane("Nodes"):
+                yield NodeView()
+            with TabPane("Edges"):
+                yield EdgeView()
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

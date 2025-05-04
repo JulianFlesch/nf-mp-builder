@@ -248,15 +248,12 @@ class GraphNode(Container):
             event.stop() # Stop propagation if needed
 
 
-class GraphView(ScrollableContainer):
+class GraphView(Container):
     """Container for the graph visualization with horizontal scrolling."""
     
     DEFAULT_CSS = f"""
     GraphView {{
-        overflow: scroll scroll; /* Explicitly allow both scrollbars */
         {"border: thick $accent-darken-2; /* Debugging border */" if DEBUG_OUTLINES else ""}
-        height: 100%;
-        width: 100%;
     }}
 
     GraphView > Horizontal {{
