@@ -250,6 +250,9 @@ class GraphNode(Container):
         )
         yield ButtonContainer(node_id=self.id)
 
+    def on_mount(self):
+        self.border_title = self.node_description
+
     def _update_dirty_state(self, new_value):
         is_now_dirty = new_value != self.name
 
