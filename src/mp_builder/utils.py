@@ -21,3 +21,7 @@ def load_gaph_from_file(file: str):
     g = json_graph.adjacency_graph(data)
 
     return g
+
+def get_nfcore_pipelines():
+    pass
+

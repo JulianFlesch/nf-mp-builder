@@ -13,6 +13,9 @@ from rich.console import RenderableType
 from rich.text import Text
 from rich.align import Align
 
+from mp_builder.dialogs import PipelineSelectDialogButton
+
+
 NODE_HEIGHT = 7
 NODE_WIDTH = 50
 DEBUG_SYMBOLS = False
@@ -169,19 +172,32 @@ class GraphNode(Container):
         width: {NODE_WIDTH};
         border: solid green;
         height: {NODE_HEIGHT};
-        padding: 0 0;
     }}
 
-    GraphNode > Input {{
-        min-height: 3
+    GraphNode > Horizontal {{
+        content-align: center middle;
+        height: 100%;
+        margin: 0 1 0 1;  /* top right bottom left */
     }}
 
-    GraphNode > Input.dirty {{
+    GraphNode > Horizontal > PipelineSelectDialogButton {{
+        width: 10%;
+        min-width: 10%;
+    }}
+    
+    GraphNode > Horizontal > Input {{
+        width: 90%;
+        height: 3;
+        margin: 0;
+    }}
+
+    GraphNode > Horizontal > Input.dirty {{
         border: dashed yellow; /* Indicate unsaved changes */
     }}
     
     GraphNode > Static {{
-        width: 75%;
+        margin: 0 0 0 1;
+        width: 90%;
     }}
     
     GraphNode > ButtonContainer {{
@@ -227,7 +243,10 @@ class GraphNode(Container):
 
         #    yield Static(self.id)
         yield Static(self.node_description)
-        yield Input(value=self.name, id=self._input_id)
+        yield Horizontal(
+            Input(value=self.name, id=self._input_id),
+            PipelineSelectDialogButton(node_data=self.node_data)
+        )
         yield ButtonContainer(node_id=self.id)
 
     def _update_dirty_state(self, new_value):
