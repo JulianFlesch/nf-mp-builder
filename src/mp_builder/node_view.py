@@ -3,7 +3,7 @@ from textual.widgets import Static
 from textual.reactive import reactive
 import networkx as nx
 
-DEBUG_OUTLINES = True
+DEBUG_OUTLINES = False
 NODE_WIDTH = 30
 NODE_HEIGHT = 3
 

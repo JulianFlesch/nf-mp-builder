@@ -192,9 +192,8 @@ class GraphNode(Container):
         padding: 0 0;
     }}
     """
-    def __init__(self, node_data: dict, text: str=None, *args, **kwargs):
+    def __init__(self, node_data: dict, *args, **kwargs):
         self.node_data = node_data
-        self.text = text
         self._is_dirty = False
         super().__init__(*args, **kwargs)
         # wait for superclass for id to be initialized
@@ -208,10 +207,26 @@ class GraphNode(Container):
     def name(self, value: str):
         self.node_data["name"] = value
 
+    @property
+    def pipeline_type(self):
+        if self.node_data.get("is_local", False):
+            return "local"
+        if self.node_data.get("is_nfcore", False):
+            return "nf-core"
+        return "no_pipeline"
+    
+    @property
+    def pipeline_status(self):
+        return self.node_data.get("pipeline_status", "no_status")
+        
+    @property
+    def node_description(self):
+        return f"{self.id} (d: {self.node_data.get("depth", "-")} b: {self.node_data.get("breadth", "-")}) {self.pipeline_type}"
+
     def compose(self) -> ComposeResult:
 
         #    yield Static(self.id)
-        yield Static(self.text)
+        yield Static(self.node_description)
         yield Input(value=self.name, id=self._input_id)
         yield ButtonContainer(node_id=self.id)
 
@@ -370,7 +385,7 @@ class GraphView(Container):
                             yield GraphNodeSpacer()
 
                         # Draw the node
-                        yield GraphNode(text=f"{node} d:{node_depth} b: {node_breadth}", id=f"{node}", node_data=self.graph.nodes[node])
+                        yield GraphNode(id=f"{node}", node_data=self.graph.nodes[node])
                         
                         # TODO: Draw the edges
 

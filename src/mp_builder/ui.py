@@ -5,6 +5,7 @@ from textual.widgets import Button, Header, Footer, TabbedContent, TabPane, Inpu
 from textual.css.query import NoMatches
 import networkx as nx
 
+from mp_builder.dialogs import QuitScreen
 from mp_builder.node_view import NodeView
 from mp_builder.edge_view import EdgeView
 from mp_builder.graph import GraphView
@@ -13,50 +14,6 @@ from mp_builder.utils import save_graph_to_file, load_gaph_from_file
 
 DEBUG_OUTLINES = False
 
-class QuitScreen(Screen):
-    """Screen with a dialog to quit."""
-    DEFAULT_CSS = """
-        QuitScreen {
-            align: center middle;
-            background: $surface 80%;
-        }
-
-        #dialog {
-            grid-size: 2;
-            grid-gutter: 1 2;
-            grid-rows: 1fr 3;
-            padding: 0 1;
-            width: 60;
-            height: 11;
-            border: thick $background 80%;
-            background: $surface;
-        }
-
-        #question {
-            column-span: 2;
-            height: 1fr;
-            width: 1fr;
-            content-align: center middle;
-        }
-
-        Button {
-            width: 100%;
-        }
-    """
-    def compose(self) -> ComposeResult:
-        yield Grid(
-            Label("Are you sure you want to quit?", id="question"),
-            Button("Quit", variant="error", id="quit"),
-            Button("Cancel", variant="primary", id="cancel"),
-            id="dialog",
-        )
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        event.stop()
-        if event.button.id == "quit":
-            self.app.exit()
-        else:
-            self.app.pop_screen()
 
 
 class MetaPipelinesApp(App):
