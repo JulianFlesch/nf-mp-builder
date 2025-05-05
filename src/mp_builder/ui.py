@@ -89,13 +89,20 @@ class MetaPipelinesApp(App):
     ]
     
     def __init__(self, graph: nx.DiGraph):
-        self._next_node_id = 1
+        self._next_node_number = 1
         self.graph = graph  #graph
         super().__init__()
 
     @property
-    def next_node_number(self):
-        nid, self._next_node_id = self._next_node_id, self._next_node_id + 1
+    def next_node_id(self):
+        self._next_node_number += 1
+        nid = f"node{self._next_node_number}"
+        existing_node_ids = self.graph.nodes()
+
+        while nid in existing_node_ids:
+            self._next_node_number += 1
+            nid = f"node{self._next_node_number}"
+
         return nid
 
     def compose(self) -> ComposeResult:
@@ -150,7 +157,7 @@ class MetaPipelinesApp(App):
             graph_view = self.query_one(GraphView)
             
             # Create a new node
-            new_node_id = f"node{self.next_node_number}"
+            new_node_id = self.next_node_id
 
             # only update the original graph
             self.graph.add_edge(parent_id, new_node_id)
