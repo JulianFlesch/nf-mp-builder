@@ -15,7 +15,34 @@ DEBUG_OUTLINES = False
 
 class QuitScreen(Screen):
     """Screen with a dialog to quit."""
+    DEFAULT_CSS = """
+        QuitScreen {
+            align: center middle;
+            background: $surface 80%;
+        }
 
+        #dialog {
+            grid-size: 2;
+            grid-gutter: 1 2;
+            grid-rows: 1fr 3;
+            padding: 0 1;
+            width: 60;
+            height: 11;
+            border: thick $background 80%;
+            background: $surface;
+        }
+
+        #question {
+            column-span: 2;
+            height: 1fr;
+            width: 1fr;
+            content-align: center middle;
+        }
+
+        Button {
+            width: 100%;
+        }
+    """
     def compose(self) -> ComposeResult:
         yield Grid(
             Label("Are you sure you want to quit?", id="question"),
@@ -54,7 +81,7 @@ class MetaPipelinesApp(App):
     """
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
-        ("q", "quit", "Quit"),
+        ("q", "request_quit", "Quit"),
         ("w", "write_graph", "Save"),
         ("o", "load_graph", "Open"),
         ("ctrl+z", "undo", "Undo"),
@@ -179,6 +206,9 @@ class MetaPipelinesApp(App):
         """Scroll the view to show a specific node."""
         focused_graph_node = self.query_one(f"GraphNode#{node_id}")
         graph_view.scroll_to_widget(focused_graph_node)
+
+    def action_request_quit(self):
+        self.push_screen(QuitScreen())
 
     def action_write_graph(self):
         self.notify("write_graph Action (DUMMY)")
