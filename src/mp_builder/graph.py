@@ -174,6 +174,10 @@ class GraphNode(Container):
         height: {NODE_HEIGHT};
     }}
 
+    GraphNode.incomplete {{
+        border: dashed green;
+    }}
+
     GraphNode > Horizontal {{
         content-align: center middle;
         height: 100%;
@@ -252,6 +256,11 @@ class GraphNode(Container):
 
     def on_mount(self):
         self.border_title = self.node_description
+        self._update_incomplete_state()
+
+    def _update_incomplete_state(self):
+        is_now_incomplete = (self.pipeline_type == "no_pipeline")
+        self.set_class(is_now_incomplete, "incomplete")
 
     def _update_dirty_state(self, new_value):
         is_now_dirty = new_value != self.name

@@ -186,7 +186,7 @@ class PipelineSelectScreen(Screen):
         event.stop()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        #event.stop()
+        #event.stop()  # TODO: Do bubble the event for now to trigger recompose
 
         if event.button.id == "close-dialog-button":
             self.app.pop_screen()
