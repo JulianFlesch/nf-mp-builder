@@ -21,6 +21,30 @@ NODE_WIDTH = 42
 DEBUG_SYMBOLS = False
 DEBUG_OUTLINES = False
 
+class GraphNodeAdd(Static):
+    DEFAULT_CSS = f"""
+    GraphNodeAdd {{
+        align: center middle;
+        height: {NODE_HEIGHT};
+        width: {NODE_WIDTH};
+        border: dashed dimgrey;
+    }}
+
+    GraphNodeAdd:hover {{
+        border: double dimgrey;
+    }}
+
+    GraphNodeAdd > Static {{
+        color: dimgrey;
+        height: auto;
+        width: auto;
+        align: center middle;
+    }}
+    """
+
+    def compose(self):
+        yield Static("+")
+
 class GraphNodeSpacer(Static):
     """A placeholder to position GraphNodes"""
     DEFAULT_CSS = f"""
@@ -175,7 +199,7 @@ class GraphNode(Container):
     }}
 
     GraphNode.incomplete {{
-        border: dashed green;
+        border: solid grey;
     }}
 
     GraphNode > Horizontal {{
@@ -418,8 +442,9 @@ class GraphView(Container):
 
                         # Draw the node
                         yield GraphNode(id=f"{node}", node_data=self.graph.nodes[node])
-                        
-                        # TODO: Draw the edges
+
+                    if i == 0 or i < len(layers) - 1:                    
+                        yield GraphNodeAdd()
 
                 # Draw edges
                 with Vertical():
