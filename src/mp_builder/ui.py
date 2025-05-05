@@ -42,7 +42,8 @@ class MetaPipelinesApp(App):
         ("w", "write_graph", "Save"),
         ("o", "load_graph", "Open"),
         ("ctrl+z", "undo", "Undo"),
-        ("ctrl+y", "redo", "Redo")
+        ("ctrl+y", "redo", "Redo"),
+        ("l", "lock", "Lock")
     ]
     
     def __init__(self, graph: nx.DiGraph):
@@ -217,3 +218,6 @@ class MetaPipelinesApp(App):
 
     def action_redo(self):
         self.notify("redo action (DUMMY)")
+
+    def action_lock(self):
+        self.notify("lock the graph action (DUMMY)")
