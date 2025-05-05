@@ -91,6 +91,22 @@ class MetaPipelinesApp(App):
         elif button_id.startswith("remove_btn_"):
             node_id = button_id.replace("remove_btn_", "")
             self._remove_node(node_id)
+
+        # Handle redraw on pipeline dialog confirm 
+        elif button_id == "confirm-dialog-button":
+
+            # TODO: This does not scroll to the selected node
+            graph_view = self.query_one(GraphView)
+            graph_view.refresh(recompose=True)
+            
+            # Redraw the node view
+            node_view = self.query_one(NodeView)
+            node_view.refresh(recompose=True)
+
+            # Redraw the edge view
+            node_view = self.query_one(EdgeView)
+            node_view.refresh(recompose=True)
+
     
     def on_input_submitted(self, event: Input.Submitted):
         # TODO: This catches input update events from graph view etc. Can this be more specific?

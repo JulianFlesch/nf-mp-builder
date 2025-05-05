@@ -108,10 +108,10 @@ class PipelineSelectScreen(Screen):
 
     @property
     def node_name(self):
-        return self.node_data.get("name", "No Name")
-
+        return self.node_data.get("name", "")
+    
     @node_name.setter
-    def pipeline_name(self, value: str):
+    def node_name(self, value):
         self.node_data["name"] = value
 
     @property
@@ -186,18 +186,20 @@ class PipelineSelectScreen(Screen):
         event.stop()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        event.stop()
+        #event.stop()
 
         if event.button.id == "close-dialog-button":
             self.app.pop_screen()
 
         elif event.button.id == "confirm-dialog-button":
             
+            #self.node_name = self.pipeline_name if self.node_name == "" else self.node_name
             self.pipeline_name = self.selected_pipeline.get("name", "")
             self.pipeline_location = self.selected_pipeline.get("location", "")
             self.pipeline_description = self.selected_pipeline.get("description", "")
             self.selected_is_nfcore = True  # TODO: How to infer what was pressed dynamically?
-
+            
+            #self.app.refresh(recompose=True)  # TODO: More fine grained control? -> Bubble up the event
             self.app.pop_screen()
 
 
