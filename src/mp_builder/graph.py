@@ -16,8 +16,8 @@ from rich.align import Align
 from mp_builder.dialogs import PipelineSelectDialogButton
 
 
-NODE_HEIGHT = 7
-NODE_WIDTH = 50
+NODE_HEIGHT = 5
+NODE_WIDTH = 42
 DEBUG_SYMBOLS = False
 DEBUG_OUTLINES = False
 
@@ -177,14 +177,14 @@ class GraphNode(Container):
     GraphNode > Horizontal {{
         content-align: center middle;
         height: 100%;
-        margin: 0 1 0 1;  /* top right bottom left */
+        margin: 0 1 0 0;  /* top right bottom left */
     }}
 
     GraphNode > Horizontal > PipelineSelectDialogButton {{
         width: 10%;
         min-width: 10%;
     }}
-    
+
     GraphNode > Horizontal > Input {{
         width: 90%;
         height: 3;
@@ -241,8 +241,9 @@ class GraphNode(Container):
 
     def compose(self) -> ComposeResult:
 
-        #    yield Static(self.id)
-        yield Static(self.node_description)
+        if NODE_HEIGHT > 5 or DEBUG_SYMBOLS:
+            yield Static(self.node_description)
+
         yield Horizontal(
             Input(value=self.name, id=self._input_id),
             PipelineSelectDialogButton(node_data=self.node_data)
