@@ -1,6 +1,8 @@
 import os
 import json
 
+import requests
+
 import networkx as nx
 from networkx.readwrite import json_graph
 
@@ -22,6 +24,18 @@ def load_gaph_from_file(file: str):
 
     return g
 
-def get_nfcore_pipelines():
-    pass
+def get_nfcore_pipelines() -> list[dict]:
 
+    """
+    Adapted from nf-core/tools `nf_core.pipelines.list.Workflows:get_remote_workflows` method
+    """
+
+    # List all repositories at nf-core
+    nfcore_url = "https://nf-co.re/pipelines.json"
+    
+    response = requests.get(nfcore_url, timeout=10)
+    if response.status_code != 200:
+        return []
+    else:
+        repos = response.json()["remote_workflows"]
+        return [{"name": p.get("full_name", ""), "location": p.get("url", ""), "description": p.get("description", "")} for p in repos]

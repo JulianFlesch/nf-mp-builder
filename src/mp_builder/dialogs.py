@@ -1,6 +1,8 @@
+import os
+
 from textual.app import ComposeResult
-from textual.widgets import Button, Label, TabbedContent, TabPane, Static
-from textual.containers import Grid, Vertical
+from textual.widgets import Button, Label, TabbedContent, TabPane, Static, Input, RadioSet, RadioButton, Markdown
+from textual.containers import Grid, Vertical, Horizontal, VerticalScroll
 
 from textual.screen import Screen
 from textual.reactive import reactive
@@ -64,57 +66,138 @@ class PipelineSelectScreen(Screen):
         #pipeline-dialog {
             padding: 0 1;
             width: 60;
-            height: auto;
+            max-height: 80%;
+            min-height: 10;
             border: thick $background 80%;
             background: $surface 80%;
         }
 
         #pipeline-dialog > Label {
             content-align: center top;
-            margin: 0 0 2 0;
+            width: auto;
+            height: 3;
+            margin: 0 0 1 0;
         }
 
-        #close-dialog-button {
+        #close-dialog-button, #confirm-dialog-button {
             content-align: center bottom;
+            margin: 1 2;
+        }
+
+        #tab-container {
+            max-height: 50%
         }
 
         #nf-core-tab, #local-tab {
-            min-height: 20;
-            max-height: 100%; 
+            min-height: 10;
+            height: auto;
+            border: solid grey; 
         }
         """
 
-
     def __init__(self, node_data: dict, *args, **kwargs):
         self.node_data = node_data
+        self.selected_pipeline = {
+            "name": self.pipeline_name,
+            "location": self.pipeline_location,
+            "description": self.pipeline_description
+        }
+        self._nf_core_pipelines = get_nfcore_pipelines()
         super().__init__(*args, **kwargs)
     
+
     @property
     def node_name(self):
         return self.node_data.get("name", "No Name")
+
+    @node_name.setter
+    def pipeline_name(self, value: str):
+        self.node_data["name"] = value
+
+    @property
+    def pipeline_name(self):
+        return self.node_data.get("pipeline_name", "")
+
+    @pipeline_name.setter
+    def pipeline_name(self, value: str):
+        self.node_data["pipeline_name"] = value
     
+    @property
+    def pipeline_location(self):
+        return self.node_data.get("pipeline_location", "")
+    
+    @pipeline_location.setter
+    def pipeline_location(self, value: str):
+        self.node_data["pipeline_location"] = value
+
+    @property
+    def pipeline_description(self):
+        return self.node_data.get("pipeline_description", "")
+    
+    @pipeline_description.setter
+    def pipeline_description(self, value: str):
+        self.node_data["pipeline_description"] = value
+
     @property
     def is_nfcore(self):
         return self.node_data.get("is_nfcore", False)
     
+    @is_nfcore.setter
+    def is_nfcore(self, val: bool):
+        self.node_data["is_nfcore"] = val
+
     @property
-    def is_local(self):
-        return self.node_data.get("is_local", False)
+    def dialog_text(self):
+        if not self.selected_pipeline.get("name", False):
+            return "Select a local or nf-core pipeline"
+        
+        return f"[{self.selected_pipeline.get("name", "")}]({self.selected_pipeline.get("location", "")})" + \
+            f"selected { os.linesep + os.linesep } {self.selected_pipeline.get("description")}"
+
+    @property
+    def nf_core_pipelines_filtered(self):
+        return self._nf_core_pipelines
     
     def compose(self) -> ComposeResult:
         with Vertical(id="pipeline-dialog"):
-            yield Label(f"Metapipeline step: {self.node_name}")
-            yield Label("Select a local or nf-core pipeline")
-            with TabbedContent(initial="local-tab" if self.is_local else "nf-core-tab"):
+            yield Label(f"Pipeline step: {self.node_name}")
+            yield Markdown(self.dialog_text, id="pipeline-dialog-text")
+
+            with TabbedContent(id="tab-container"):
                 with TabPane("search nf-core", id="nf-core-tab"):
-                    yield Static("FOO")
-                with TabPane("search locally", id="local-tab"):
-                    yield Static("Bar")
-            yield Button("close", id="close-dialog-button", variant="primary")
-    
+                    with VerticalScroll():
+                        with RadioSet(id="nf-core-pipelines-list"):
+                            for p in self.nf_core_pipelines_filtered:
+                                yield RadioButton(p["name"], value=(p["location"] == self.pipeline_location))
+
+                with TabPane("search locally", id="local-tab", disabled=True):
+                    with VerticalScroll():
+                        yield Static("Local Pipelines are currently not supported")
+
+            with Horizontal():
+                yield Button("confirm", id="confirm-dialog-button", variant="success")
+                yield Button("close", id="close-dialog-button", variant="primary")
+
+    def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
+        self.selected_pipeline = self.nf_core_pipelines_filtered[event.radio_set.pressed_index]
+
+        self.query_one("#pipeline-dialog-text", Markdown).update(self.dialog_text)
+
+        event.stop()
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         event.stop()
+
         if event.button.id == "close-dialog-button":
+            self.app.pop_screen()
+
+        elif event.button.id == "confirm-dialog-button":
+            
+            self.pipeline_name = self.selected_pipeline.get("name", "")
+            self.pipeline_location = self.selected_pipeline.get("location", "")
+            self.pipeline_description = self.selected_pipeline.get("description", "")
+            self.selected_is_nfcore = True  # TODO: How to infer what was pressed dynamically?
+
             self.app.pop_screen()
 
 
