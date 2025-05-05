@@ -193,11 +193,11 @@ class PipelineSelectScreen(Screen):
 
         elif event.button.id == "confirm-dialog-button":
             
-            #self.node_name = self.pipeline_name if self.node_name == "" else self.node_name
             self.pipeline_name = self.selected_pipeline.get("name", "")
+            self.node_name = self.pipeline_name if self.node_name == "" else self.node_name
             self.pipeline_location = self.selected_pipeline.get("location", "")
             self.pipeline_description = self.selected_pipeline.get("description", "")
-            self.selected_is_nfcore = True  # TODO: How to infer what was pressed dynamically?
+            self.is_nfcore = True  # TODO: How to infer what was pressed dynamically?
             
             #self.app.refresh(recompose=True)  # TODO: More fine grained control? -> Bubble up the event
             self.app.pop_screen()
