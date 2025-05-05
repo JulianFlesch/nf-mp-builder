@@ -1,6 +1,7 @@
 from textual.app import App, ComposeResult
-from textual.containers import ScrollableContainer
-from textual.widgets import Button, Header, Footer, TabbedContent, TabPane
+from textual.containers import ScrollableContainer, Grid
+from textual.screen import Screen
+from textual.widgets import Button, Header, Footer, TabbedContent, TabPane, Input, Label
 from textual.css.query import NoMatches
 import networkx as nx
 
@@ -10,7 +11,25 @@ from mp_builder.graph import GraphView
 from mp_builder.utils import save_graph_to_file, load_gaph_from_file
 
 
-DEBUG_OUTLINES = True
+DEBUG_OUTLINES = False
+
+class QuitScreen(Screen):
+    """Screen with a dialog to quit."""
+
+    def compose(self) -> ComposeResult:
+        yield Grid(
+            Label("Are you sure you want to quit?", id="question"),
+            Button("Quit", variant="error", id="quit"),
+            Button("Cancel", variant="primary", id="cancel"),
+            id="dialog",
+        )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        event.stop()
+        if event.button.id == "quit":
+            self.app.exit()
+        else:
+            self.app.pop_screen()
 
 
 class MetaPipelinesApp(App):
@@ -60,7 +79,7 @@ class MetaPipelinesApp(App):
                     yield GraphView(self.graph)  # pass reference
             with TabPane("Nodes"):
                 with ScrollableContainer(id="node-scroll"):
-                    yield NodeView()
+                    yield NodeView(self.graph)
             with TabPane("Edges"):
                 with ScrollableContainer(id="edge-scroll"):
                     yield EdgeView()
@@ -82,6 +101,22 @@ class MetaPipelinesApp(App):
             node_id = button_id.replace("remove_btn_", "")
             self._remove_node(node_id)
     
+    def on_input_submitted(self, event: Input.Submitted):
+        # TODO: This catches input update events from graph view etc. Can this be more specific?
+
+        event.stop()
+
+        # TODO: Need to redraw graph_view for events in other views?
+
+        # Redraw the node view
+        node_view = self.query_one(NodeView)
+        node_view.refresh(recompose=True)
+
+        # Redraw the edge view
+        node_view = self.query_one(EdgeView)
+        node_view.refresh(recompose=True)
+
+    
     def _add_node(self, parent_id: str) -> None:
             """Add a new node after the parent node."""
         #try:
@@ -98,6 +133,14 @@ class MetaPipelinesApp(App):
             
             # Make sure the view scrolls to show the new node
             graph_view.call_after_refresh(self.scroll_to_node, graph_view, new_node_id)
+
+            # Redraw the node view
+            node_view = self.query_one(NodeView)
+            node_view.refresh(recompose=True)
+
+            # Redraw the edge view
+            node_view = self.query_one(EdgeView)
+            node_view.refresh(recompose=True)
 
         #except NoMatches:
         #    self.notify("Could not find parent node")
@@ -119,6 +162,14 @@ class MetaPipelinesApp(App):
             # Redraw the graph
             graph_view = self.query_one(GraphView)
             graph_view.refresh(recompose=True)
+
+            # Redraw the node view
+            node_view = self.query_one(NodeView)
+            node_view.refresh(recompose=True)
+
+            # Redraw the edge view
+            node_view = self.query_one(EdgeView)
+            node_view.refresh(recompose=True)
 
             self.notify(f"Node removed")
         except NoMatches:
@@ -143,6 +194,13 @@ class MetaPipelinesApp(App):
         graph_view = self.query_one(GraphView)
         graph_view.graph = self.graph
         graph_view.refresh(recompose=True)
+
+        # Redraw the node view
+        node_view = self.query_one(NodeView)
+        node_view.graph = self.graph
+        node_view.refresh(recompose=True)
+
+        #TODO: Redraw Edge View ?
 
     def action_undo(self):
         self.notify("undo action (DUMMY)")

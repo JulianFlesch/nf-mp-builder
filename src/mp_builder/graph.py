@@ -227,7 +227,7 @@ class GraphNode(Container):
         """Handle the Input submitted event (Enter pressed)."""
         # Prevent the event from bubbling further up the DOM
         # if you don't want parent widgets to react to it.
-        event.stop()
+        #event.stop()
 
         self.name = event.value.strip()
         self._is_dirty = False
