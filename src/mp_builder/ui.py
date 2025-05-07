@@ -20,22 +20,10 @@ class MetaPipelinesApp(App):
     node_height: int = None
     node_width: int = None
 
-    CSS_PATH = ["../../styles/styles.tcss",
-                "../../styles/dialogs.tcss"]
-    
-    DEFAULT_CSS_ = f"""
-    TabbedContent {{
-        { "border: thick $accent-darken-1;" if DEBUG_OUTLINES else "" }
-    }}
-
-    TabPane {{
-        { "border: thick red;" if DEBUG_OUTLINES else "" }
-    }}
-
-    TabPane > ScrollableContainer {{
-        { "border: thick dodgerblue;" if DEBUG_OUTLINES else "" }
-    }}
-    """
+    CSS_PATH = [
+        "../../styles/styles.tcss",
+        "../../styles/dialogs.tcss",
+    ]
 
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
@@ -51,6 +39,11 @@ class MetaPipelinesApp(App):
         self._next_node_number = 1
         self.graph = graph  #graph
         super().__init__()
+        try:
+            self.node_height = self.get_css_variables()["node_height"]
+            self.node_width = self.get_css_variables()["node_width"]
+        except KeyError:
+            raise RuntimeError("Required $node_height or $node_width not set in the .tcss stylesheet!")
 
     @property
     def next_node_id(self):
