@@ -1,6 +1,6 @@
 import os
 import json
-
+from dataclasses import dataclass
 import requests
 
 import networkx as nx

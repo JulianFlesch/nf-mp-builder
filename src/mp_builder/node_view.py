@@ -10,28 +10,6 @@ NODE_WIDTH = 30
 NODE_HEIGHT = 5
 
 class PipelineView(Widget):
-        
-    DEFAULT_CSS = f"""
-    PipelineView {{
-        align: center middle;
-        width: {NODE_WIDTH};
-        border: solid green;
-        height: {NODE_HEIGHT};
-        padding: 0 0;
-    }}
-
-    PipelineView > Horizontal > Static {{
-        height: 100%;
-        width: 90%;
-    }}
-
-    PipelineView > Horizontal > PipelineSelectDialogButton {{
-        width: 10%;
-        min-width: 4;
-        
-    }}
-    
-    """
 
     #name = reactive("PIPELINE NAME")
     #node_data = reactive(dict())
@@ -52,16 +30,11 @@ class PipelineView(Widget):
 class NodeView(Container):
 
     DEFAULT_CSS = f"""
-
     NodeView {{
-        height: auto;
-        width: auto;
         {"border: thick $accent-darken-2; /* Debugging border */" if DEBUG_OUTLINES else ""}
     }}
 
     NodeView > Vertical {{
-        height: auto;
-        width: auto;
         {"border: thick $accent-darken-2; /* Debugging border */" if DEBUG_OUTLINES else ""}
     }}
     """

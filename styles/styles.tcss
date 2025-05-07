@@ -1,0 +1,182 @@
+$node_height: 5;
+$node_width: 45;
+
+ 
+MetaPipelinesApp {
+    background: #1f1f1f;
+}
+
+/* ####################### */
+/* GRAPH VIEW DECLARATIONS */
+/* ####################### */
+
+GraphView {
+    height: auto;
+    width: auto;
+}
+
+GraphView > Horizontal {
+    /* Let this container size itself based on its content */
+    width: auto;
+    height: auto;
+    /* Add some visual space between columns if desired */
+    /* grid-gutter-horizontal: 5; */ /* If using grid layout */
+    /* Or use margin on Vertical below */
+    content-align: center middle;
+}
+
+/* Each vertical column representing a layer */
+GraphView > Horizontal > Vertical {
+    width: auto; /* Let column width be determined by nodes inside */
+    height: auto; /* Let column height grow with nodes/spacers */
+    /* border: round $accent-lighten-2; */ /* Debugging border */
+    /* Add space between columns */
+    /* margin-right: 5; */ /* Example spacing */
+    /* Align items top-center within the column */
+    align: center top;
+}
+
+GraphView > Horizontal > Vertical > GraphEdge {
+    max-width: 8;
+    height: auto;
+    content-align: center middle;
+}
+
+Placeholder {
+    height: 5;
+}
+
+GraphNodeSpacer {
+    height: $node_height;
+    width: $node_width;
+}
+
+GraphNodeAdd {
+    align: center middle;
+    height: $node_height;
+    width: $node_width;
+    border: dashed dimgrey;
+}
+
+GraphNodeAdd:hover {
+    border: double dimgrey;
+}
+
+GraphNodeAdd > Static {
+    color: dimgrey;
+    height: auto;
+    width: auto;
+    align: center middle;
+}
+
+GraphNode {
+    width: $node_width;
+    border: solid green;
+    height: $node_height;
+}
+
+GraphNode.incomplete {
+    border: solid grey;
+}
+
+GraphNode > Horizontal {
+    content-align: center middle;
+    height: 100%;
+    margin: 0 1 0 0;  /* top right bottom left */
+}
+
+GraphNode > Horizontal > PipelineSelectDialogButton {
+    width: 10%;
+    min-width: 10%;
+}
+
+GraphNode > Horizontal > Input {
+    width: 90%;
+    height: 3;
+    margin: 0;
+}
+
+GraphNode > Horizontal > Input.dirty {
+    border: dashed yellow; /* Indicate unsaved changes */
+}
+
+GraphNode > Static {
+    margin: 0 0 0 1;
+    width: 90%;
+}
+
+GraphNode > ButtonContainer {
+    dock: right;
+    width: 10%;
+    min-width: 7;
+    height: 100%;
+    padding: 0 0;
+}
+
+
+GraphEdge {
+    width: 8
+}
+
+ButtonContainer > AddNodeButton {
+    height: 100%;
+    dock: left;
+}
+
+ButtonContainer > RemoveNodeButton {
+    height: 100%;
+    dock: right;
+}
+
+AddNodeButton {
+    width: 50%;
+    max-width: 3;
+    height: 100%;
+    content-align: center middle;
+    background: green;
+    color: white;
+    padding: 0 0;
+}
+
+RemoveNodeButton {
+    width: 50%;
+    max-width: 3;
+    height: 100%;
+    content-align: center middle;
+    background: red;
+    color: white;
+    padding: 0 0;
+}
+
+
+/* ####################### */
+/* NODE VIEW DELCARATIONS */
+/* ####################### */
+ PipelineView {
+    align: center middle;
+    width: $node_width;
+    border: solid green;
+    height: $node_height;
+    padding: 0 0;
+}
+
+PipelineView > Horizontal > Static {
+    height: 100%;
+    width: 90%;
+}
+
+PipelineView > Horizontal > PipelineSelectDialogButton {
+    width: 10%;
+    min-width: 4;
+}
+
+
+NodeView {
+    height: auto;
+    width: auto;
+}
+
+NodeView > Vertical {
+    height: auto;
+    width: auto;
+}

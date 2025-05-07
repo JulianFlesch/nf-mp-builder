@@ -12,18 +12,18 @@ from mp_builder.graph import GraphView
 from mp_builder.utils import save_graph_to_file, load_gaph_from_file
 
 
-DEBUG_OUTLINES = False
-
-
+DEBUG_OUTLINES = True
 
 class MetaPipelinesApp(App):
     """Main application for graph visualization."""
-    
-    DEFAULT_CSS = f"""    
-    MetaPipelinesApp {{
-        background: #1f1f1f;
-    }}
+    debug_outlines = False
+    node_height: int = None
+    node_width: int = None
 
+    CSS_PATH = ["../../styles/styles.tcss",
+                "../../styles/dialogs.tcss"]
+    
+    DEFAULT_CSS_ = f"""
     TabbedContent {{
         { "border: thick $accent-darken-1;" if DEBUG_OUTLINES else "" }
     }}
@@ -36,6 +36,7 @@ class MetaPipelinesApp(App):
         { "border: thick dodgerblue;" if DEBUG_OUTLINES else "" }
     }}
     """
+
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
         ("q", "request_quit", "Quit"),
@@ -136,19 +137,20 @@ class MetaPipelinesApp(App):
             # only update the original graph
             self.graph.add_edge(parent_id, new_node_id)
 
+            # Redraw the node view
+            #node_view = self.query_one(NodeView)
+            #node_view.refresh(recompose=True)
+
+            # Redraw the edge view
+            #node_view = self.query_one(EdgeView)
+            #node_view.refresh(recompose=True)
+
             # Update Graph view
             graph_view.refresh(recompose=True)
             
             # Make sure the view scrolls to show the new node
             graph_view.call_after_refresh(self.scroll_to_node, graph_view, new_node_id)
 
-            # Redraw the node view
-            node_view = self.query_one(NodeView)
-            node_view.refresh(recompose=True)
-
-            # Redraw the edge view
-            node_view = self.query_one(EdgeView)
-            node_view.refresh(recompose=True)
 
         #except NoMatches:
         #    self.notify("Could not find parent node")

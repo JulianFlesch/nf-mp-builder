@@ -22,37 +22,12 @@ DEBUG_SYMBOLS = False
 DEBUG_OUTLINES = False
 
 class GraphNodeAdd(Static):
-    DEFAULT_CSS = f"""
-    GraphNodeAdd {{
-        align: center middle;
-        height: {NODE_HEIGHT};
-        width: {NODE_WIDTH};
-        border: dashed dimgrey;
-    }}
-
-    GraphNodeAdd:hover {{
-        border: double dimgrey;
-    }}
-
-    GraphNodeAdd > Static {{
-        color: dimgrey;
-        height: auto;
-        width: auto;
-        align: center middle;
-    }}
-    """
 
     def compose(self):
         yield Static("+")
 
 class GraphNodeSpacer(Static):
     """A placeholder to position GraphNodes"""
-    DEFAULT_CSS = f"""
-    GraphNodeSpacer {{
-        height: {NODE_HEIGHT};
-        width: {NODE_WIDTH};
-    }}
-    """
 
     def compose(self) -> ComposeResult:
         yield Static()
@@ -70,11 +45,6 @@ class GraphEdge(Widget):
         '     '
     ]
 
-    DEFAULT_CSS = """
-    GraphEdge {
-        width: 8
-    }
-    """
     def __init__(self, in_breadths: list[int], out_breadths: list[list[int]], *args, **kwargs):
         assert(len(out_breadths) == len(in_breadths))
         self.in_breadths = in_breadths
@@ -135,49 +105,15 @@ class GraphEdge(Widget):
 
 class AddNodeButton(Button):
     """Button to add a new node."""
-    
-    DEFAULT_CSS = """
-    AddNodeButton {
-        width: 50%;
-        max-width: 3;
-        height: 100%;
-        content-align: center middle;
-        background: green;
-        color: white;
-        padding: 0 0;
-    }
-    """
+
 
 class RemoveNodeButton(Button):
     """Button to remove a node."""
-    
-    DEFAULT_CSS = """
-    RemoveNodeButton {
-        width: 50%;
-        max-width: 3;
-        height: 100%;
-        content-align: center middle;
-        background: red;
-        color: white;
-        padding: 0 0;
-    }
-    """
+
 
 class ButtonContainer(Container):
     """
     Contains Add/Remove Buttons
-    """
-
-    DEFAULT_CSS = """
-    ButtonContainer > AddNodeButton {
-        height: 100%;
-        dock: left;
-    }
-    
-    ButtonContainer > RemoveNodeButton {
-        height: 100%;
-        dock: right;
-    }
     """
 
     def __init__(self, node_id, *args, **kwargs):
@@ -191,51 +127,7 @@ class ButtonContainer(Container):
 
 class GraphNode(Container):
     """A node in the graph visualization."""
-    DEFAULT_CSS = f"""
-    GraphNode {{
-        width: {NODE_WIDTH};
-        border: solid green;
-        height: {NODE_HEIGHT};
-    }}
-
-    GraphNode.incomplete {{
-        border: solid grey;
-    }}
-
-    GraphNode > Horizontal {{
-        content-align: center middle;
-        height: 100%;
-        margin: 0 1 0 0;  /* top right bottom left */
-    }}
-
-    GraphNode > Horizontal > PipelineSelectDialogButton {{
-        width: 10%;
-        min-width: 10%;
-    }}
-
-    GraphNode > Horizontal > Input {{
-        width: 90%;
-        height: 3;
-        margin: 0;
-    }}
-
-    GraphNode > Horizontal > Input.dirty {{
-        border: dashed yellow; /* Indicate unsaved changes */
-    }}
     
-    GraphNode > Static {{
-        margin: 0 0 0 1;
-        width: 90%;
-    }}
-    
-    GraphNode > ButtonContainer {{
-        dock: right;
-        width: 10%;
-        min-width: 7;
-        height: 100%;
-        padding: 0 0;
-    }}
-    """
     def __init__(self, node_data: dict, *args, **kwargs):
         self.node_data = node_data
         self._is_dirty = False
@@ -296,8 +188,6 @@ class GraphNode(Container):
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle the Input submitted event (Enter pressed)."""
-        # Prevent the event from bubbling further up the DOM
-        # if you don't want parent widgets to react to it.
         #event.stop()
 
         self.name = event.value.strip()
@@ -305,8 +195,8 @@ class GraphNode(Container):
         input_widget = self.query_one(f"#{self._input_id}")
         input_widget.remove_class("dirty")
 
-        # --- Perform your desired action here ---
-        self.notify(f"Enter pressed on Input in Node '{self.id}'. New potential ID: '{self.name}'")
+        # TODO: Doesn't refresh node / edge view
+        #self.refresh(recompose=True)
 
     def on_input_changed(self, event: Input.Changed) -> None:
         """Called whenever the Input value changes."""
@@ -324,42 +214,16 @@ class GraphView(Container):
     
     DEFAULT_CSS = f"""
     GraphView {{
-        height: auto;
-        width: auto;
         {"border: thick $accent-darken-2; /* Debugging border */" if DEBUG_OUTLINES else ""}
     }}
 
     GraphView > Horizontal {{
-        /* Let this container size itself based on its content */
-        width: auto;
-        height: auto;
         /* Add some visual space between columns if desired */
         /* grid-gutter-horizontal: 5; */ /* If using grid layout */
         /* Or use margin on Vertical below */
         {"border: thick $accent-darken-2; /* Debugging border */" if DEBUG_OUTLINES else ""}
-        content-align: center middle;
     }}
 
-    /* Each vertical column representing a layer */
-    GraphView > Horizontal > Vertical {{
-        width: auto; /* Let column width be determined by nodes inside */
-        height: auto; /* Let column height grow with nodes/spacers */
-        /* border: round $accent-lighten-2; */ /* Debugging border */
-        /* Add space between columns */
-        /* margin-right: 5; */ /* Example spacing */
-        /* Align items top-center within the column */
-        align: center top;
-    }}
-
-    GraphView > Horizontal > Vertical > GraphEdge {{
-        max-width: 8;
-        height: auto;
-        content-align: center middle;
-    }}
-
-    Placeholder {{
-        height: 5;
-    }}
     """
     graph: nx.DiGraph
 

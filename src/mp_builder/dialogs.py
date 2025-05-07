@@ -12,34 +12,6 @@ from mp_builder.utils import get_nfcore_pipelines
 
 class QuitScreen(Screen):
     """Screen with a dialog to quit."""
-    DEFAULT_CSS = """
-        QuitScreen {
-            align: center middle;
-            background: $surface 80%;
-        }
-
-        #quit-dialog {
-            grid-size: 2;
-            grid-gutter: 1 2;
-            grid-rows: 1fr 3;
-            padding: 0 1;
-            width: 60;
-            height: 11;
-            border: thick $background 80%;
-            background: $surface;
-        }
-
-        #question {
-            column-span: 2;
-            height: 1fr;
-            width: 1fr;
-            content-align: center middle;
-        }
-
-        Button {
-            width: 100%;
-        }
-    """
     def compose(self) -> ComposeResult:
         yield Grid(
             Label("Are you sure you want to quit?", id="question"),
@@ -57,43 +29,6 @@ class QuitScreen(Screen):
 
 
 class PipelineSelectScreen(Screen):
-    DEFAULT_CSS = """
-        PipelineSelectScreen {
-            align: center middle;
-            background: $surface 80%;
-        }
-
-        #pipeline-dialog {
-            padding: 0 1;
-            width: 60;
-            max-height: 80%;
-            min-height: 10;
-            border: thick $background 80%;
-            background: $surface 80%;
-        }
-
-        #pipeline-dialog > Label {
-            content-align: center top;
-            width: auto;
-            height: 3;
-            margin: 0 0 1 0;
-        }
-
-        #close-dialog-button, #confirm-dialog-button {
-            content-align: center bottom;
-            margin: 1 2;
-        }
-
-        #tab-container {
-            max-height: 50%
-        }
-
-        #nf-core-tab, #local-tab {
-            min-height: 10;
-            height: auto;
-            border: solid grey; 
-        }
-        """
 
     def __init__(self, node_data: dict, *args, **kwargs):
         self.node_data = node_data
@@ -205,13 +140,6 @@ class PipelineSelectScreen(Screen):
 
 class PipelineSelectDialogButton(Button):
 
-    DEFAULT_CSS = """
-    PipelineSelectButton {
-        content-align: center middle;
-        height: 3;
-        width: 3;
-    }
-    """
     ICON = '📄'
 
     def __init__(self, node_data: dict, *args, **kwargs):
