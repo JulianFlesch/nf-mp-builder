@@ -1,9 +1,16 @@
 from pathlib import Path
 from typing import Optional, Dict, List, Any
+import logging
 
 from pydantic import BaseModel, Field, field_validator, ValidationError
 import yaml
 
+from mp_builder.utils import get_nfcore_pipelines
+
+logger = logging.getLogger(__name__)
+
+CONFIG_VERSION_MIN = "0.0.1"
+CONFIG_VERSION_MAX = "0.0.1"
 
 class Workflow(BaseModel):
     id: str
@@ -26,7 +33,7 @@ class Transition(BaseModel):
 
 class Config(BaseModel):
     metaworkflow_version: str
-    nextflow_version: str
+    nextflow_version: Optional[str]
     workflows: List[Workflow]
     workflow_opts: Optional[WorkflowOptions] = None
     workflow_opts_custom: Optional[WorkflowOptions] = None
@@ -61,4 +68,33 @@ class Config(BaseModel):
             if tr.from_ and tr.from_ not in all_ids:
                 raise ValueError(f"transition 'from' references unknown workflow id: {tr.from_}")
         return transitions
+    
+    # ------------------------------
+    # Validation: transitions refer to nf-core workflow IDs
+    # ------------------------------
+    @field_validator("workflows")
+    def workflows_exists_in_nfcore(cls, workflows, info):
+        nf_core_pipelines = get_nfcore_pipelines()
+        if not len(nf_core_pipelines):
+            logging.warning("Workflows could not be validated against nf-core")
+            return workflows
+        nf_core_pipeline_names = {w.get("name") for w in nf_core_pipelines}
+        unknown_workflows = []
+        for w in workflows:
+            if w.name not in nf_core_pipeline_names:
+                unknown_workflows.append(w.name)
+        if len(unknown_workflows):
+            raise ValueError(f"Potentially uncompatible workflows found, which are not officially supported by nf-core: %s" % ", ".join(unknown_workflows))
+        return workflows
+
+
+def load_config(path: Path) -> Config:
+    with open(path) as fh:
+        data = yaml.safe_load(fh)
+    return Config.model_validate(data)
+
+
+def dump_config(config: Config, path: Path):
+    with open(path, "w") as fh:
+        yaml.safe_dump(config.model_dump(by_alias=True), fh, sort_keys=False)
 
