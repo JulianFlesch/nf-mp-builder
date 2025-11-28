@@ -2,18 +2,19 @@ from pathlib import Path
 from typing import Optional, Dict, List, Any
 import logging
 
-from pydantic import BaseModel, Field, field_validator, ValidationError
+from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError, ValidationInfo
 import yaml
 
 from mp_builder.utils import get_nfcore_pipelines
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 CONFIG_VERSION_MIN = "0.0.1"
 CONFIG_VERSION_MAX = "0.0.1"
 
 class Workflow(BaseModel):
     id: str
+    description: Optional[str] = None
     name: str
     version: str
 
@@ -31,70 +32,55 @@ class Transition(BaseModel):
     params: Optional[List[Dict[str, Any]]] = None
 
 
-class Config(BaseModel):
+class MetaworkflowConfig(BaseModel):
     metaworkflow_version: str
     nextflow_version: Optional[str]
     workflows: List[Workflow]
     workflow_opts: Optional[WorkflowOptions] = None
     workflow_opts_custom: Optional[WorkflowOptions] = None
-    metalayout: Optional[Dict[str, List[str]]] = None
     transitions: List[Transition]
-
-    # ------------------------------
-    # Validation: workflow IDs exist
-    # ------------------------------
-    @field_validator("metalayout")
-    def valid_workflow_ids(cls, value, info):
-        if value is None:
-            return value
-        all_ids = {w.id for w in info.data["workflows"]}
-        for src, targets in value.items():
-            if src not in all_ids:
-                raise ValueError(f"metalayout references unknown workflow id: {src}")
-            for t in targets:
-                if t not in all_ids:
-                    raise ValueError(f"metalayout targets unknown workflow id: {t}")
-        return value
 
     # ------------------------------
     # Validation: transitions refer to real workflow IDs
     # ------------------------------
-    @field_validator("transitions")
-    def transitions_valid(cls, transitions, info):
-        all_ids = {w.id for w in info.data["workflows"]}
-        for tr in transitions:
+    @model_validator(mode="after")
+    def transitions_valid(self):
+        all_ids = {w.id for w in self.workflows}
+        for tr in self.transitions:
             if tr.run not in all_ids:
                 raise ValueError(f"transition 'run' references unknown workflow id: {tr.run}")
             if tr.from_ and tr.from_ not in all_ids:
                 raise ValueError(f"transition 'from' references unknown workflow id: {tr.from_}")
-        return transitions
+        return self
     
     # ------------------------------
     # Validation: transitions refer to nf-core workflow IDs
     # ------------------------------
     @field_validator("workflows")
-    def workflows_exists_in_nfcore(cls, workflows, info):
+    @classmethod
+    def workflows_exists_in_nfcore(cls, workflows):
         nf_core_pipelines = get_nfcore_pipelines()
         if not len(nf_core_pipelines):
             logging.warning("Workflows could not be validated against nf-core")
             return workflows
+        
         nf_core_pipeline_names = {w.get("name") for w in nf_core_pipelines}
         unknown_workflows = []
         for w in workflows:
             if w.name not in nf_core_pipeline_names:
                 unknown_workflows.append(w.name)
         if len(unknown_workflows):
-            raise ValueError(f"Potentially uncompatible workflows found, which are not officially supported by nf-core: %s" % ", ".join(unknown_workflows))
+            logging.warning(f"Potentially uncompatible workflows found, which are not officially supported by nf-core: %s" % ", ".join(unknown_workflows))
         return workflows
 
 
-def load_config(path: Path) -> Config:
+def load_config(path: Path) -> MetaworkflowConfig:
     with open(path) as fh:
         data = yaml.safe_load(fh)
-    return Config.model_validate(data)
+    return MetaworkflowConfig.model_validate(data)
 
 
-def dump_config(config: Config, path: Path):
+def dump_config(config: MetaworkflowConfig, path: Path):
     with open(path, "w") as fh:
         yaml.safe_dump(config.model_dump(by_alias=True), fh, sort_keys=False)
 
