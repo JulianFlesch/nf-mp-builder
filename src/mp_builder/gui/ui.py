@@ -5,14 +5,16 @@ from textual.widgets import Button, Header, Footer, TabbedContent, TabPane, Inpu
 from textual.css.query import NoMatches
 import networkx as nx
 
-from mp_builder.dialogs import QuitScreen
-from mp_builder.node_view import NodeView
-from mp_builder.edge_view import EdgeView
-from mp_builder.graph import GraphView
-from mp_builder.utils import save_graph_to_file, load_gaph_from_file
+from mp_builder.gui.dialogs import QuitScreen
+from mp_builder.gui.node_view import NodeView
+from mp_builder.gui.edge_view import EdgeView
+from mp_builder.gui.graph import GraphView
+from mp_builder.utils import save_graph_to_file, load_graph_from_file
 
 
 DEBUG_OUTLINES = True
+NODE_HEIGHT = 5
+NODE_WIDTH = 10
 
 class MetaPipelinesApp(App):
     """Main application for graph visualization."""
@@ -21,8 +23,8 @@ class MetaPipelinesApp(App):
     node_width: int = None
 
     CSS_PATH = [
-        "../../styles/styles.tcss",
-        "../../styles/dialogs.tcss",
+        "styles/styles.tcss",
+        "styles/dialogs.tcss",
     ]
 
     BINDINGS = [
@@ -39,11 +41,20 @@ class MetaPipelinesApp(App):
         self._next_node_number = 1
         self.graph = graph  #graph
         super().__init__()
+
+        css_variables = self.app.get_css_variables()
+
+        css_variables["node_height"] = 10
+        css_variables["node_width"] = 20
+
+        self.refresh_css()
         try:
+            print (self.get_css_variables())
             self.node_height = self.get_css_variables()["node_height"]
             self.node_width = self.get_css_variables()["node_width"]
         except KeyError:
-            raise RuntimeError("Required $node_height or $node_width not set in the .tcss stylesheet!")
+            #raise RuntimeError("Required $node_height or $node_width not set in the .tcss stylesheet!")
+            pass
 
     @property
     def next_node_id(self):

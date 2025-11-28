@@ -13,7 +13,7 @@ from rich.console import RenderableType
 from rich.text import Text
 from rich.align import Align
 
-from mp_builder.dialogs import PipelineSelectDialogButton
+from mp_builder.gui.dialogs import PipelineSelectDialogButton
 
 
 NODE_HEIGHT = 5

@@ -1,4 +1,4 @@
-from mp_builder.ui import MetaPipelinesApp
+from mp_builder.gui.ui import MetaPipelinesApp
 import networkx as nx
 
 def main():

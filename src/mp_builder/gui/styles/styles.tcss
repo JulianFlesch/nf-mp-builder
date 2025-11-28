@@ -1,5 +1,5 @@
-$node_height: 5;
-$node_width: 45;
+$node_height: 5;  /* KEEP IN SYNC WITH VALUE IN ui.py */
+$node_width: 45;  /* KEEP IN SYNC WITH VALUE IN ui.py */
 
  
 MetaPipelinesApp {

@@ -3,7 +3,7 @@ from textual.widgets import Static
 from textual.reactive import reactive
 import networkx as nx
 
-from mp_builder.dialogs import PipelineSelectDialogButton
+from mp_builder.gui.dialogs import PipelineSelectDialogButton
 
 DEBUG_OUTLINES = False
 NODE_WIDTH = 30
