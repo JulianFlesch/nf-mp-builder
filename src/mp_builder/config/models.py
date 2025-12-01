@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional, Dict, List, Any
 import logging
+import re
 
 from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError, ValidationInfo
 import yaml
@@ -9,8 +10,8 @@ from mp_builder.utils import get_nfcore_pipelines
 
 logger = logging.getLogger()
 
-CONFIG_VERSION_MIN = "0.0.1"
-CONFIG_VERSION_MAX = "0.0.1"
+CONFIG_VERSION_MIN = (0,0,1)
+CONFIG_VERSION_MAX = (0,9,9)
 
 class Workflow(BaseModel):
     id: str
@@ -33,8 +34,7 @@ class Transition(BaseModel):
 
 
 class MetaworkflowConfig(BaseModel):
-    metaworkflow_version: str
-    nextflow_version: Optional[str]
+    config_version: str
     workflows: List[Workflow]
     workflow_opts: Optional[WorkflowOptions] = None
     workflow_opts_custom: Optional[WorkflowOptions] = None
@@ -72,6 +72,20 @@ class MetaworkflowConfig(BaseModel):
         if len(unknown_workflows):
             logging.warning(f"Potentially uncompatible workflows found, which are not officially supported by nf-core: %s" % ", ".join(unknown_workflows))
         return workflows
+
+    @field_validator("config_version")
+    @classmethod
+    def config_version_valid(cls, config_version):
+        result = re.match(r"^\d+\.\d+\.\d$", config_version)
+        if not result:
+            raise ValueError(f"Invalid config version: {config_version}")
+        
+        version = (int(x) for x in result.string.split("."))
+        if version < CONFIG_VERSION_MIN:
+            raise ValueError(f"Incompatible config version! Config version must be at least {CONFIG_VERSION_MIN}")
+
+        if version > CONFIG_VERSION_MAX:
+            raise ValueError(f"Incompatible config version! Config version can be at most {CONFIG_VERSION_MAX}")
 
 
 def load_config(path: Path) -> MetaworkflowConfig:
