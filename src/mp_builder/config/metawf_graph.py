@@ -30,10 +30,7 @@ class MetaworkflowGraph:
     @classmethod
     def from_config(cls, cfg_dict: Dict[str, Any]) -> "MetaworkflowGraph":
         # Validate config structure using Pydantic
-        try:
-            cfg = MetaworkflowConfig(**cfg_dict)
-        except ValidationError as e:
-            raise ValueError(f"Config validation failed:\n{e}")
+        cfg = MetaworkflowConfig(**cfg_dict)
 
         obj = cls()
 
