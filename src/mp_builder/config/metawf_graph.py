@@ -1,11 +1,15 @@
 from typing import Dict, Any, Optional
 from pathlib import Path
 import yaml
+import logging
 
 from pydantic import ValidationError
 import networkx as nx
 
 from .models import MetaworkflowConfig
+from mp_builder.utils import get_nfcore_pipelines
+
+logger = logging.getLogger()
 
 
 class MetaworkflowGraph:
@@ -34,21 +38,42 @@ class MetaworkflowGraph:
 
         obj = cls()
 
+        nfcore_pipelines = get_nfcore_pipelines()
+
         # Add workflow nodes
         for wf in cfg.workflows:
-            obj.G.add_node(
-                wf.id,
-                name=wf.name,
-                version=wf.version,
-            )
+            nfcore_matches = list(filter(lambda p: p.get("name") == wf.name, nfcore_pipelines))
+            if len(nfcore_matches) > 0:
+                match = nfcore_matches.pop()
+                obj.G.add_node(
+                    wf.id,
+                    id=wf.id,
+                    is_nfcore=True,
+                    pipeline_location=match.get("location"),
+                    pipeline_description=match.get("description"),
+                    name=wf.name,
+                    version=wf.version,
+                )
+            else:
+                obj.G.add_node(
+                    wf.id,
+                    id=wf.id,
+                    is_nfcore=False,
+                    name=wf.name,
+                    pipeline_location=wf.pipeline_location,
+                    version=wf.version
+                )
 
         # Add transition metadata
         for t in cfg.transitions:
             src = t.from_ if t.from_ else cls.ROOT_NODE
             tgt = t.run
 
-            if (src != cls.ROOT_NODE and src not in obj.G.nodes) or tgt not in obj.G.nodes:
-                raise ValueError(f"Unknown node: {src}->{tgt}")
+            if src != cls.ROOT_NODE and src not in obj.G.nodes:
+                raise ValueError(f"Unknown node {src} found in transition {src}->{tgt}")
+            
+            if tgt not in obj.G.nodes:
+                raise ValueError(f"Unknown node {tgt} found in transition {src}->{tgt}")
 
             if src == cls.ROOT_NODE:
                 if cls.ROOT_NODE not in obj.G.nodes:
@@ -98,6 +123,7 @@ class MetaworkflowGraph:
             {
                 "id": n,
                 "name": self.G.nodes[n]["name"],
+                "pipeline_location": self.G.nodes[n]["pipeline_location"],
                 "version": self.G.nodes[n]["version"],
             }
             for n in nodes
