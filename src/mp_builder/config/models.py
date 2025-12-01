@@ -80,7 +80,7 @@ class MetaworkflowConfig(BaseModel):
         if not result:
             raise ValueError(f"Invalid config version: {config_version}")
         
-        version = (int(x) for x in result.string.split("."))
+        version = tuple([int(x) for x in result.string.split(".")])
         if version < CONFIG_VERSION_MIN:
             raise ValueError(f"Incompatible config version! Config version must be at least {CONFIG_VERSION_MIN}")
 
