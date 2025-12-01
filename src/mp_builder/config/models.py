@@ -71,14 +71,15 @@ class MetaworkflowConfig(BaseModel):
             if w.name not in nf_core_pipeline_names:
                 unknown_workflows.append(w)
         if len(unknown_workflows):
-            logging.warning(f"Potentially uncompatible workflows found, which are not officially supported by nf-core: %s" % ", ".join(unknown_workflows))
+            names = list(map(lambda w: w.name, unknown_workflows))
+            logging.warning(f"Potentially uncompatible workflows found, which are not officially supported by nf-core: {", ".join(names)}")
             without_repo = []
             for w in unknown_workflows:
                 if not w.pipeline_location:
                     without_repo.append(w)
             if len(without_repo):
                 names = list(map(lambda w: w.name, without_repo))
-                raise ValueError(f"Workflows from outside nf-core must specify a repository! No `pipeline_location` found for: {names.join(", ")}")
+                raise ValueError(f"Workflows from outside nf-core must specify a repository! No `pipeline_location` found for: {", ".join(names)}")
         return workflows
 
     @field_validator("config_version")
