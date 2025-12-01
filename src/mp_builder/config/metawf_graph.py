@@ -126,15 +126,6 @@ class MetaworkflowGraph:
             for n in nodes
         ]
 
-        # metalayout adjacency list
-        metalayout = {
-            n: [
-                t for t in self.G.successors(n)
-                if t != self.ROOT_NODE
-            ]
-            for n in nodes
-        }
-
         transitions = []
         for src, tgt, data in self.G.edges(data=True):
             meta = data.get("data", {})
@@ -149,7 +140,6 @@ class MetaworkflowGraph:
         return {
             "metaworkflow_version": "0.0.1",
             "workflows": workflows,
-            "metalayout": metalayout,
             "transitions": transitions,
         }
 
