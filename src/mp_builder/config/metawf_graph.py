@@ -78,14 +78,11 @@ class MetaworkflowGraph:
             if src == cls.ROOT_NODE:
                 if cls.ROOT_NODE not in obj.G.nodes:
                     obj.G.add_node(cls.ROOT_NODE, virtual=True)
-                obj.G.add_edge(cls.ROOT_NODE, tgt, metadata=t.dict(exclude_none=True))
-            else:
-                if not obj.G.has_edge(src, tgt):
-                    # Transition not declared in metalayout → auto-add
-                    obj.G.add_edge(src, tgt, metadata={})
-                obj.G.edges[src, tgt]["metadata"].update(
-                    t.dict(exclude_none=True, by_alias=True)
-                )
+
+            if not obj.G.has_edge(src, tgt):
+                # Transition not declared in metalayout → auto-add
+                # TODO: Be more specific with keys once they are stable-ish
+                obj.G.add_edge(src, tgt, data=t.model_dump())
 
         # Run graph validation
         obj.validate()
@@ -140,7 +137,7 @@ class MetaworkflowGraph:
 
         transitions = []
         for src, tgt, data in self.G.edges(data=True):
-            meta = data.get("metadata", {})
+            meta = data.get("data", {})
             if src == self.ROOT_NODE:
                 t = {"run": tgt}
             else:
