@@ -15,8 +15,9 @@ CONFIG_VERSION_MAX = (0,9,9)
 
 class Workflow(BaseModel):
     id: str
-    description: Optional[str] = None
+    description: Optional[str] = ""
     name: str
+    pipeline_location: Optional[str] = ""
     version: str
 
 
@@ -58,7 +59,7 @@ class MetaworkflowConfig(BaseModel):
     # ------------------------------
     @field_validator("workflows")
     @classmethod
-    def workflows_exists_in_nfcore(cls, workflows):
+    def workflows_exist_in_nfcore_or_have_location(cls, workflows):
         nf_core_pipelines = get_nfcore_pipelines()
         if not len(nf_core_pipelines):
             logging.warning("Workflows could not be validated against nf-core")
@@ -68,9 +69,16 @@ class MetaworkflowConfig(BaseModel):
         unknown_workflows = []
         for w in workflows:
             if w.name not in nf_core_pipeline_names:
-                unknown_workflows.append(w.name)
+                unknown_workflows.append(w)
         if len(unknown_workflows):
             logging.warning(f"Potentially uncompatible workflows found, which are not officially supported by nf-core: %s" % ", ".join(unknown_workflows))
+            without_repo = []
+            for w in unknown_workflows:
+                if not w.pipeline_location:
+                    without_repo.append(w)
+            if len(without_repo):
+                names = list(map(lambda w: w.name, without_repo))
+                raise ValueError(f"Workflows from outside nf-core must specify a repository! No `pipeline_location` found for: {names.join(", ")}")
         return workflows
 
     @field_validator("config_version")
