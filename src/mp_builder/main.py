@@ -1,9 +1,9 @@
 from mp_builder.gui.ui import MetaPipelinesApp
-import networkx as nx
+from mp_builder.config import MetaworkflowGraph
 
 def main():
     
-    g = nx.DiGraph()
-    g.add_node("node0")
-    app = MetaPipelinesApp(graph=g)
+    mg = MetaworkflowGraph()
+    mg.G.add_node(MetaworkflowGraph.ROOT_NODE)
+    app = MetaPipelinesApp(mg)
     app.run()

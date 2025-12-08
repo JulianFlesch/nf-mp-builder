@@ -1,4 +1,5 @@
 from pathlib import Path
+from packaging.version import Version
 from typing import Optional, Dict, List, Any
 import logging
 import re
@@ -10,8 +11,8 @@ from mp_builder.utils import get_nfcore_pipelines
 
 logger = logging.getLogger()
 
-CONFIG_VERSION_MIN = (0,0,1)
-CONFIG_VERSION_MAX = (0,9,9)
+CONFIG_VERSION_MIN = "0.0.1"
+CONFIG_VERSION_MAX = "0.9.9"
 
 class Workflow(BaseModel):
     id: str
@@ -89,12 +90,14 @@ class MetaworkflowConfig(BaseModel):
         if not result:
             raise ValueError(f"Invalid config version: {config_version}")
         
-        version = tuple([int(x) for x in result.string.split(".")])
-        if version < CONFIG_VERSION_MIN:
+        version = Version(result.string)
+        if version < Version(CONFIG_VERSION_MIN):
             raise ValueError(f"Incompatible config version! Config version must be at least {CONFIG_VERSION_MIN}")
 
-        if version > CONFIG_VERSION_MAX:
+        if version > Version(CONFIG_VERSION_MAX):
             raise ValueError(f"Incompatible config version! Config version can be at most {CONFIG_VERSION_MAX}")
+
+        return str(version)
 
 
 def load_config(path: Path) -> MetaworkflowConfig:
@@ -107,3 +110,7 @@ def dump_config(config: MetaworkflowConfig, path: Path):
     with open(path, "w") as fh:
         yaml.safe_dump(config.model_dump(by_alias=True), fh, sort_keys=False)
 
+
+def dump_config_dict(config: dict, path: Path):
+    with open(path, "w") as fh:
+        yaml.safe_dump(config, fh, sort_keys=False)

@@ -35,7 +35,8 @@ class PipelineSelectScreen(Screen):
         self.selected_pipeline = {
             "name": self.pipeline_name,
             "location": self.pipeline_location,
-            "description": self.pipeline_description
+            "description": self.pipeline_description,
+            "version": "dev" # TODO: prompt pipeline version
         }
         self._nf_core_pipelines = get_nfcore_pipelines()
         super().__init__(*args, **kwargs)

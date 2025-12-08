@@ -14,6 +14,7 @@ from rich.text import Text
 from rich.align import Align
 
 from mp_builder.gui.dialogs import PipelineSelectDialogButton
+from mp_builder.config import MetaworkflowGraph
 
 
 NODE_HEIGHT = 5
@@ -225,17 +226,17 @@ class GraphView(Container):
     }}
 
     """
-    graph: nx.DiGraph
+    mg: MetaworkflowGraph
 
-    def __init__(self, graph: nx.DiGraph):
-        self.graph = graph
+    def __init__(self, graph: MetaworkflowGraph):
+        self.mg = graph
         super().__init__()
 
     def _unvisit_graph(self):
-        for n in self.graph.nodes():
-            self.graph.nodes[n]["visited"] = False
-            self.graph.nodes[n]["depth"] = 0
-            self.graph.nodes[n]["breadth"] = 0
+        for n in self.mg.G.nodes():
+            self.mg.G.nodes[n]["visited"] = False
+            self.mg.G.nodes[n]["depth"] = 0
+            self.mg.G.nodes[n]["breadth"] = 0
 
     def _layout_graph(self):
         """
@@ -243,7 +244,7 @@ class GraphView(Container):
         """
         # TODO: How to find root?
         # first node is currently always set as root:
-        current_node = list(self.graph.nodes())[0]
+        current_node = list(self.mg.G.nodes())[0]
         stack = [current_node]
 
         # node breadth is tracked globally
@@ -254,19 +255,19 @@ class GraphView(Container):
             # get top of stack
             current_node = stack.pop(0)
 
-            if not self.graph.nodes[current_node].get("visited", False):
+            if not self.mg.G.nodes[current_node].get("visited", False):
                 # position the node relative to ancestors
                 depth = 0
-                for ancestor in nx.ancestors(self.graph, current_node):
-                    depth = max(self.graph.nodes[ancestor].get("depth", 0) + 1, depth)
-                    #breadth = min(self.graph.nodes[ancestor].get("breadth", 0), breadth + 1)
+                for ancestor in nx.ancestors(self.mg.G, current_node):
+                    depth = max(self.mg.G.nodes[ancestor].get("depth", 0) + 1, depth)
+                    #breadth = min(self.mg.G.nodes[ancestor].get("breadth", 0), breadth + 1)
 
-                self.graph.nodes[current_node]["depth"] = depth
-                self.graph.nodes[current_node]["breadth"] = breadth
-                self.graph.nodes[current_node]["visited"] = True
+                self.mg.G.nodes[current_node]["depth"] = depth
+                self.mg.G.nodes[current_node]["breadth"] = breadth
+                self.mg.G.nodes[current_node]["visited"] = True
 
                 # We have to infer direct descendants from edge data
-                node_descendants = list(map(lambda edge: edge[1], nx.edges(self.graph, current_node)))
+                node_descendants = list(map(lambda edge: edge[1], nx.edges(self.mg.G, current_node)))
                 stack = node_descendants + stack
 
                 if len(node_descendants) == 0:
@@ -278,19 +279,19 @@ class GraphView(Container):
         self._layout_graph()
 
         with Horizontal(id="graph_container"):
-            layers = list(nx.bfs_layers(self.graph, "node0"))
+            layers = list(nx.bfs_layers(self.mg.G, MetaworkflowGraph.ROOT_NODE))
 
             for i, layer in enumerate(layers):
                 # TODO: Can this be avoided by recycling next_layer from below?
-                layer = sorted(layer, key=lambda n: self.graph.nodes[n].get("breadth", 0))
+                layer = sorted(layer, key=lambda n: self.mg.G.nodes[n].get("breadth", 0))
                 
                 # Draw Nodes
                 with Vertical():
                     tot_breadth = 0
                     for j, node in enumerate(layer):
 
-                        node_depth = self.graph.nodes[node].get("depth")
-                        node_breadth = self.graph.nodes[node].get("breadth")
+                        node_depth = self.mg.G.nodes[node].get("depth")
+                        node_breadth = self.mg.G.nodes[node].get("breadth")
 
                         #yield Static("Depth: " + str(node_depth) + " Breadth: " + str(node_breadth))
                         
@@ -305,7 +306,7 @@ class GraphView(Container):
                             yield GraphNodeSpacer()
 
                         # Draw the node
-                        yield GraphNode(id=f"{node}", node_data=self.graph.nodes[node])
+                        yield GraphNode(id=f"{node}", node_data=self.mg.G.nodes[node])
 
                     if i == 0 or i < len(layers) - 1:                    
                         yield GraphNodeAdd()
@@ -320,13 +321,13 @@ class GraphView(Container):
                     else:
                         # Construct next layer
                         next_layer = [
-                            list(sorted(map(lambda e: e[1], self.graph.out_edges(n)),
-                                   key=lambda n: self.graph.nodes[n].get("breadth", 0)))
+                            list(sorted(map(lambda e: e[1], self.mg.G.out_edges(n)),
+                                   key=lambda n: self.mg.G.nodes[n].get("breadth", 0)))
                             for n in layer
                         ]
                         #layers[i+1] = next_layer  # keep the sorting
 
-                        in_breadths = list(map(lambda n: self.graph.nodes[n].get("breadth"), layer))
-                        out_breadths = [list(map(lambda n: self.graph.nodes[n].get("breadth"), descs)) for descs in next_layer]
+                        in_breadths = list(map(lambda n: self.mg.G.nodes[n].get("breadth"), layer))
+                        out_breadths = [list(map(lambda n: self.mg.G.nodes[n].get("breadth"), descs)) for descs in next_layer]
 
                         yield GraphEdge(in_breadths=in_breadths, out_breadths=out_breadths)

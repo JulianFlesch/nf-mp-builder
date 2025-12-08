@@ -4,6 +4,8 @@ from textual.reactive import reactive
 import networkx as nx
 
 from mp_builder.gui.dialogs import PipelineSelectDialogButton
+from mp_builder.config import MetaworkflowGraph
+
 
 DEBUG_OUTLINES = False
 NODE_WIDTH = 30
@@ -39,12 +41,12 @@ class NodeView(Container):
     }}
     """
 
-    def __init__(self, graph: nx.DiGraph):
-        self.graph = graph
+    def __init__(self, metaworkflow_graph: MetaworkflowGraph):
+        self.mg = metaworkflow_graph
         super().__init__()
 
     def compose(self):
 
         with Vertical():
-            for i, n in enumerate(self.graph.nodes):
-                yield PipelineView(n, self.graph.nodes[n])
+            for i, n in enumerate(self.mg.G.nodes):
+                yield PipelineView(n, self.mg.G.nodes[n])

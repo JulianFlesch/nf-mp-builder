@@ -9,7 +9,8 @@ from mp_builder.gui.dialogs import QuitScreen
 from mp_builder.gui.node_view import NodeView
 from mp_builder.gui.edge_view import EdgeView
 from mp_builder.gui.graph import GraphView
-from mp_builder.utils import save_graph_to_file, load_graph_from_file
+from mp_builder.utils import load_graph_from_file
+from mp_builder.config import MetaworkflowGraph
 
 
 DEBUG_OUTLINES = True
@@ -37,9 +38,9 @@ class MetaPipelinesApp(App):
         ("l", "lock", "Lock")
     ]
     
-    def __init__(self, graph: nx.DiGraph):
+    def __init__(self, metaworkflow_graph: MetaworkflowGraph):
         self._next_node_number = 1
-        self.graph = graph  #graph
+        self.mg = metaworkflow_graph
         super().__init__()
 
         css_variables = self.app.get_css_variables()
@@ -60,7 +61,7 @@ class MetaPipelinesApp(App):
     def next_node_id(self):
         self._next_node_number += 1
         nid = f"node{self._next_node_number}"
-        existing_node_ids = self.graph.nodes()
+        existing_node_ids = self.mg.G.nodes()
 
         while nid in existing_node_ids:
             self._next_node_number += 1
@@ -73,10 +74,10 @@ class MetaPipelinesApp(App):
         with TabbedContent():
             with TabPane("Graph"):
                 with ScrollableContainer(id="graph-scroll"):
-                    yield GraphView(self.graph)  # pass reference
+                    yield GraphView(self.mg)  # pass reference
             with TabPane("Nodes"):
                 with ScrollableContainer(id="node-scroll"):
-                    yield NodeView(self.graph)
+                    yield NodeView(self.mg)
             with TabPane("Edges"):
                 with ScrollableContainer(id="edge-scroll"):
                     yield EdgeView()
@@ -139,7 +140,7 @@ class MetaPipelinesApp(App):
             new_node_id = self.next_node_id
 
             # only update the original graph
-            self.graph.add_edge(parent_id, new_node_id)
+            self.mg.G.add_edge(parent_id, new_node_id)
 
             # Redraw the node view
             #node_view = self.query_one(NodeView)
@@ -168,10 +169,10 @@ class MetaPipelinesApp(App):
                 return
             
             # Remove node (and all its edges)
-            to_remove = nx.descendants(self.graph, node_id)
-            self.graph.remove_node(node_id)
+            to_remove = nx.descendants(self.mg.G, node_id)
+            self.mg.G.remove_node(node_id)
             for n in to_remove:
-                self.graph.remove_node(n)
+                self.mg.G.remove_node(n)
 
             # Redraw the graph
             graph_view = self.query_one(GraphView)
@@ -198,23 +199,23 @@ class MetaPipelinesApp(App):
         self.push_screen(QuitScreen())
 
     def action_write_graph(self):
-        self.notify("write_graph Action (DUMMY)")
-        file = "mp-builder-graph.json"
-        save_graph_to_file(self.graph, file)
+        file = "metapipeline.yaml"
+        self.notify(f"Writing graph to {file}")
+        self.mg.to_file(file)
 
     def action_load_graph(self):
         self.notify("load_graph action (DUMMY)")
-        file = "mp-builder-graph.json"
-        self.graph = load_gaph_from_file(file).copy()
+        file = "metapipeline.yaml"
+        self.mg = MetaworkflowGraph.from_file(file)
         
         # Redraw the graph
         graph_view = self.query_one(GraphView)
-        graph_view.graph = self.graph
+        graph_view.mg = self.mg
         graph_view.refresh(recompose=True)
 
         # Redraw the node view
         node_view = self.query_one(NodeView)
-        node_view.graph = self.graph
+        node_view.mg = self.mg
         node_view.refresh(recompose=True)
 
         #TODO: Redraw Edge View ?

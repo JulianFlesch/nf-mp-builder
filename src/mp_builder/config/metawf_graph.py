@@ -6,7 +6,7 @@ import logging
 from pydantic import ValidationError
 import networkx as nx
 
-from .models import MetaworkflowConfig
+from .models import MetaworkflowConfig, CONFIG_VERSION_MIN, dump_config_dict
 from mp_builder.utils import get_nfcore_pipelines
 
 logger = logging.getLogger()
@@ -19,10 +19,10 @@ class MetaworkflowGraph:
     - config ↔ graph conversion
     - utilities for workflow orchestration
     """
-    ROOT_NODE = "START"
+    ROOT_NODE = "node0"
 
     def __init__(self):
-        self.G = nx.DiGraph()
+        self.G: nx.DiGraph = nx.DiGraph()
 
     @classmethod
     def from_file(cls, cfg_file: Path) -> "MetaworkflowGraph":
@@ -113,7 +113,7 @@ class MetaworkflowGraph:
     # ===========================
     #   EXPORT BACK TO CONFIG
     # ===========================
-    def to_config(self) -> Dict[str, Any]:
+    def to_config_dict(self) -> Dict[str, Any]:
         nodes = [n for n in self.G.nodes if n != self.ROOT_NODE]
 
         workflows = [
@@ -138,11 +138,15 @@ class MetaworkflowGraph:
             transitions.append(t)
 
         return {
-            "metaworkflow_version": "0.0.1",
+            "metaworkflow_version": CONFIG_VERSION_MIN,
             "workflows": workflows,
             "transitions": transitions,
         }
 
+    def to_file(self, file: Path|str) -> None:
+        dump_config_dict(self.to_config_dict(), Path(file))
+        
+        
     # ===========================
     #        UTILITIES
     # ===========================
