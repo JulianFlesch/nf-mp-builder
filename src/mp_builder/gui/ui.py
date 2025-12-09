@@ -9,7 +9,6 @@ from mp_builder.gui.dialogs import QuitScreen
 from mp_builder.gui.node_view import NodeView
 from mp_builder.gui.edge_view import EdgeView
 from mp_builder.gui.graph import GraphView
-from mp_builder.utils import load_graph_from_file
 from mp_builder.config import MetaworkflowGraph
 
 

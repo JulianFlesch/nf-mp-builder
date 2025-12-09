@@ -242,9 +242,8 @@ class GraphView(Container):
         """
         DFS to assign node coordinates that aid drawing
         """
-        # TODO: How to find root?
-        # first node is currently always set as root:
-        current_node = list(self.mg.G.nodes())[0]
+        # first node in topological sort is set as root
+        current_node = self.mg.first_node_or_root()
         stack = [current_node]
 
         # node breadth is tracked globally
@@ -279,7 +278,7 @@ class GraphView(Container):
         self._layout_graph()
 
         with Horizontal(id="graph_container"):
-            layers = list(nx.bfs_layers(self.mg.G, MetaworkflowGraph.ROOT_NODE))
+            layers = list(nx.bfs_layers(self.mg.G, self.mg.first_node_or_root()))
 
             for i, layer in enumerate(layers):
                 # TODO: Can this be avoided by recycling next_layer from below?
