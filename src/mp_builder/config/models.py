@@ -108,7 +108,7 @@ def load_config(path: Path) -> MetaworkflowConfig:
 
 def dump_config(config: MetaworkflowConfig, path: Path):
     with open(path, "w") as fh:
-        yaml.safe_dump(config.model_dump(by_alias=True), fh, sort_keys=False)
+        yaml.safe_dump(config.model_dump(by_alias=True, exclude_none=True), fh, sort_keys=False)
 
 
 def dump_config_dict(config: dict, path: Path):

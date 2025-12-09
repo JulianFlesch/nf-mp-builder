@@ -3,10 +3,9 @@ from pathlib import Path
 import yaml
 import logging
 
-from pydantic import ValidationError
 import networkx as nx
 
-from .models import MetaworkflowConfig, CONFIG_VERSION_MIN, dump_config_dict
+from .models import MetaworkflowConfig, CONFIG_VERSION_MIN, dump_config
 from mp_builder.utils import get_nfcore_pipelines
 
 logger = logging.getLogger()
@@ -75,10 +74,6 @@ class MetaworkflowGraph:
             if tgt not in obj.G.nodes:
                 raise ValueError(f"Unknown node {tgt} found in transition {src}->{tgt}")
 
-            if src == cls.ROOT_NODE:
-                if cls.ROOT_NODE not in obj.G.nodes:
-                    obj.G.add_node(cls.ROOT_NODE, virtual=True)
-
             if not obj.G.has_edge(src, tgt):
                 # Transition not declared in metalayout → auto-add
                 # TODO: Be more specific with keys once they are stable-ish
@@ -113,15 +108,15 @@ class MetaworkflowGraph:
     # ===========================
     #   EXPORT BACK TO CONFIG
     # ===========================
-    def to_config_dict(self) -> Dict[str, Any]:
+    def to_config(self) -> Dict[str, Any]:
         nodes = [n for n in self.G.nodes if n != self.ROOT_NODE]
 
         workflows = [
             {
                 "id": n,
                 "name": self.G.nodes[n]["name"],
-                "pipeline_location": self.G.nodes[n]["pipeline_location"],
-                "version": self.G.nodes[n]["version"],
+                "pipeline_location": self.G.nodes[n].get("pipeline_location", None),
+                "version": self.G.nodes[n].get("version", None),
             }
             for n in nodes
         ]
@@ -134,17 +129,18 @@ class MetaworkflowGraph:
             else:
                 t = {"from": src, "run": tgt}
 
+            # TODO: This potentially adds unwanted fields!
             t.update(meta)
             transitions.append(t)
 
-        return {
-            "metaworkflow_version": CONFIG_VERSION_MIN,
+        return MetaworkflowConfig.model_validate({
+            "config_version": CONFIG_VERSION_MIN,
             "workflows": workflows,
             "transitions": transitions,
-        }
+        })
 
     def to_file(self, file: Path|str) -> None:
-        dump_config_dict(self.to_config_dict(), Path(file))
+        dump_config(self.to_config(), Path(file))
         
         
     # ===========================
@@ -156,6 +152,16 @@ class MetaworkflowGraph:
             n for n in nx.topological_sort(self.G)
             if n != self.ROOT_NODE
         ]
+
+    def first_node_or_root(self):
+        """
+        Return the first order in topological sorting or the root node, if no nodes exist
+        """
+        nodes_ordered = self.execution_order()
+        if not len(nodes_ordered):
+            return self.ROOT_NODE
+        else:
+            return nodes_ordered[0]
 
     def successors(self, workflow_id: str):
         return list(self.G.successors(workflow_id))
